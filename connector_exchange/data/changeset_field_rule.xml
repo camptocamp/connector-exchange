@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<openerp>
+  <data noupdate="1">
+    <record model="changeset.field.rule" id="changeset_field_rule_email">
+      <field name="action">validate</field>
+      <field name="field_id" ref="base.field_res_partner_email"/>
+      <field name="source_model_id" ref="connector_exchange.model_res_users_backend_folder"/>
+    </record>
+    <record model="changeset.field.rule" id="changeset_field_rule_parent_id">
+      <field name="action">validate</field>
+      <field name="field_id" ref="base.field_res_partner_parent_id"/>
+      <field name="source_model_id" ref="connector_exchange.model_res_users_backend_folder"/>
+    </record>
+  </data>
+</openerp>

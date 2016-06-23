@@ -1,0 +1,252 @@
+interactions:
+- request:
+    body: "<?xml version=\"1.0\" ?>\n<soap:Envelope xmlns:m=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+      \ xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+      \ xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
+      >\n\t\n    \n\t<soap:Header>\n\t\t\n      \n\t\t<t:ExchangeImpersonation>\n\t\
+      \t\t\n        \n\t\t\t<t:ConnectingSID>\n\t\t\t\t\n          \n\t\t\t\t<t:PrincipalName>c1odoo@linkingup.org</t:PrincipalName>\n\
+      \t\t\t\t\n        \n\t\t\t</t:ConnectingSID>\n\t\t\t\n      \n\t\t</t:ExchangeImpersonation>\n\
+      \t\t\n    \n\t</soap:Header>\n\t\n  \n\t<soap:Body>\n\t\t\n    \n    \n\t\t\
+      <m:GetFolder>\n\t\t\t\n      \n\t\t\t<m:FolderShape>\n\t\t\t\t\n        \n\t\
+      \t\t\t<t:BaseShape>AllProperties</t:BaseShape>\n\t\t\t\t\n      \n\t\t\t</m:FolderShape>\n\
+      \t\t\t\n      \n\t\t\t<m:FolderIds>\n\t\t\t\t\n        \n\t\t\t\t<t:DistinguishedFolderId\
+      \ Id=\"msgfolderroot\"/>\n\t\t\t\t\n      \n\t\t\t</m:FolderIds>\n\t\t\t\n \
+      \   \n\t\t</m:GetFolder>\n\t\t\n\n  \n\t</soap:Body>\n\t\n\n</soap:Envelope>\n"
+    headers:
+      Accept: [text/xml]
+      Accept-Encoding: ['gzip, deflate']
+      Authorization: [Basic YW9kb29AbGlua2luZ3VwLm9yZzpIaWdoQ28yMDE2]
+      Connection: [keep-alive]
+      Content-Length: ['959']
+      Content-Type: [text/xml; charset=utf-8]
+      User-Agent: [python-requests/2.9.1]
+    method: POST
+    uri: https://java.linkingup.org/EWS/Exchange.asmx
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcpl
+        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/Ih7/Hu8W
+        ZXqZ101RLT/7aHe881GaL6fVrFhefPbRuj3fPvjo9zh63Dw6XV7mZbXKU2q/bB41n300b9vVo7t3
+        m+k8X2TNmD5vqmw1ruqLu/jlbq5v3P0I7387z2Z5ffR4/uh1XlN/Pyldni3Pq/SL7Kcr8wHhsP9R
+        +kWx9D6595E0ebIuytmL9WKS19Rs7562Cz6mDwXDeQ/DRTGtq6Y6b8fTanE3fzedZ8uL/G5D+BTT
+        vLm7t7Pz6d32epU3CuPDITx61xQWytXV1fjqHhOIGu7e/b2/eP6aAW8Xy6bNltPcvTW7+a2P7h49
+        vusI2zx6Us2ufwjdHj1ePPo8b59VJfX7Km9W1bIxbLH4eiRb5E2TXTiqtV8PjFAe+Bm0vlDAUZz1
+        y9T8fVJmDc356/WUIIZwTqpZfvSiOq3rqn58t/M5tRPA1E2rv7rfzmbpGZH1+Pj4J44//+LdZO/V
+        5WTnSZV9d1b9PnsH659anh0/vzjm58sv79Wvs4v5q7fXz+79XvNXXy1/75dvr06Pj8/KVxcv7v/0
+        7umi+UX13sHywbMfXF7RC99+M13Sj4/SEybH75VfU0c/QZ88+X0YYPGTnx/fW7z86nV2/YsuJ9fn
+        ze/95V36+PTBemcK9mkfvczqfKl0+VnGdHEVw/T4s88Ek6dFsyqz6xfZIj8irNoiT5v16h/9q+si
+        X9d5OsvTMksn2fIXremPjwvSG/Uia0k/NI/vhm8TsDdVm5Un1XrZHu3ga+9v+vZkTgpDxiyf7e6h
+        Ue9javrVsib58iD5H+BvM913PSa4O8xsRz73OO6MvXEE6YZMs5gb/Xv0/wARRehxsgUAAA==
+    headers:
+      cache-control: [private]
+      content-encoding: [gzip]
+      content-type: [text/xml; charset=utf-8]
+      date: ['Fri, 01 Apr 2016 12:44:21 GMT']
+      server: [Microsoft-IIS/7.5]
+      set-cookie: ['exchangecookie=8088a7ae4f554c6789dcdf8770d5f883; expires=Sat,
+          01-Apr-2017 12:44:21 GMT; path=/; HttpOnly']
+      vary: [Accept-Encoding]
+      x-aspnet-version: [2.0.50727]
+      x-powered-by: [ASP.NET]
+    status: {code: 200, message: OK}
+- request:
+    body: "<?xml version=\"1.0\" ?>\n<soap:Envelope xmlns:m=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+      \ xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+      \ xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
+      >\n\t\n    \n\t<soap:Header>\n\t\t\n      \n\t\t<t:ExchangeImpersonation>\n\t\
+      \t\t\n        \n\t\t\t<t:ConnectingSID>\n\t\t\t\t\n          \n\t\t\t\t<t:PrincipalName>c1odoo@linkingup.org</t:PrincipalName>\n\
+      \t\t\t\t\n        \n\t\t\t</t:ConnectingSID>\n\t\t\t\n      \n\t\t</t:ExchangeImpersonation>\n\
+      \t\t\n    \n\t</soap:Header>\n\t\n  \n\t<soap:Body>\n\t\t\n    \n    \n\t\t\
+      <m:FindFolder Traversal=\"Shallow\">\n\t\t\t\n      \n\t\t\t<m:FolderShape>\n\
+      \t\t\t\t\n        \n\t\t\t\t<t:BaseShape>AllProperties</t:BaseShape>\n\t\t\t\
+      \t\n      \n\t\t\t</m:FolderShape>\n\t\t\t\n      \n\t\t\t<m:ParentFolderIds>\n\
+      \t\t\t\t\n          \n              \n\t\t\t\t<t:FolderId ChangeKey=\"AQAAABYAAAAAiVGA3mPUSayqvbyfsXO/AAAE7u0c\"\
+      \ Id=\"AAAQAGMxb2Rvb0BoaWdoY28uZnIALgAAAAAAOO3rSaghRkyF3KhRUnXPkwEAAIlRgN5j1Emsqr28n7FzvwAAAHTcnAAA\"\
+      />\n\t\t\t\t\n          \n      \n\t\t\t</m:ParentFolderIds>\n\t\t\t\n    \n\
+      \t\t</m:FindFolder>\n\t\t\n\n\n  \n\t</soap:Body>\n\t\n\n</soap:Envelope>\n"
+    headers:
+      Accept: [text/xml]
+      Accept-Encoding: ['gzip, deflate']
+      Authorization: [Basic YW9kb29AbGlua2luZ3VwLm9yZzpIaWdoQ28yMDE2]
+      Connection: [keep-alive]
+      Content-Length: ['1141']
+      Content-Type: [text/xml; charset=utf-8]
+      User-Agent: [python-requests/2.9.1]
+    method: POST
+    uri: https://java.linkingup.org/EWS/Exchange.asmx
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcpl
+        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/Ih7/Hu8W
+        ZXqZ101RLT/7aHe881GaL6fVrFhefPbRuj3fPvjo9zh63Dw6XV7mZbXKU2q/bB41n300b9vVo7t3
+        m+k8X2TNmD5vqmw1ruqLu/jlbq5v3P0I7387z2Z5ffR4/uh1XlN/Pyldni3Pq/SL7Kcr8wHhsP9R
+        +kWx9D6595E0ebIuytmL9WKS19Rs7562Cz6mDwXDeQ/DRTGtq6Y6b8fTanE3fzedZ8uL/G5D+BTT
+        vLm7t7Pz6d32epU3CuPDITx61xQWytXV1fjqHhOIGu7e/b2/eP6aAW8Xy6bNltPcvTW7+a2P7h49
+        vusI2zx6Us2ufwjdHj1ePHpWLGfPqpI6fpU3q2rZGL5YfD2aLfKmyS4c2dqvB0ZIDwQNWl8o4DjS
+        +m1q/j4ps4Zm/fV6SiBDQCfVLD96UZ3WdVU/vtv5HO2qqhXg6ZuqzcqzNl80Z8ufLPIr8OpH6dly
+        Wq5nefM8a1p8ebZ8hRF89lFbr3Pqqn0krzfuV/fb2Sw9o7k5Pj7+iePPv3g32Xt1Odl5UmXfnVW/
+        z97B+qeWZ8fPL475+fLLe/Xr7GL+6u31s3u/1/zVV8vf++Xbq9Pj47Py1cWL+z+9e7poflG9d7B8
+        8OwHl1f0wrffTJf086P0hEn6e+XX1NFP0BdPfh8GWPzk58f3Fi+/ep1d/6LLyfV583t/eZc+Pj1Y
+        /t4teLB99DKr86WO/mcb0+MYpseffSaYCA48jUdnL5+NX1Rt/vhu+Dk1e1o0qzK7fpEt8qMn1T/6
+        N7R5OsvT+h/9q6f5qiWVg1f8NvQKT+pJtV62Rzv42vubvj2ZkwrSTlyb3qfU8qtlTQLrNfI/cKj+
+        HDBBFSXtZiY4nr34wen/j5jgYzJaVfHzcvp/0cXXm/7v/P9h+uuKfIiS9Pn/O6b+JCvz5Syrf9gs
+        0CMsgN1gBh6sf7D3/3YWOF6tqmLZLgi9GzhBKF8Xef2zxgl3Y/N7Ui3bbNo2P+wZ/4kuHfHFjTN+
+        Nf9/+4wrPW+abaX65rneu8Vc7w3P9cDM/tDmeD9KuZsV+0//f2COz4uLdZ0Zl23zTCPI5abp8ZR/
+        vM7blsLc/5fo/B8yV+xdfT2uyP/fzhW3MPdE/hoqPqWA8B/9q5uiziZl/vOSC6qf+Hpc8Pn/D7jg
+        H/2jy3/0r4ZL0KTw+q+JE35+8sDF1+OBZ///4oFmvVrVxeJGLtjbffD/Tz74RV2L8ATAbuaD3+v/
+        7XzwHVL3y6y8gRW8Vj/vVEDdJegTEPTmqX/+//apf90W07fXt1AEaPL/EvX/Jmve/rDjwPonugwA
+        SDczwBf/b2cAEPOGqX/zj/4ltMbwczr5wZRbbAlTLDTYhQX+c3AR48hflXDLHtFXjrBwhOUiXkEy
+        S3tH/w8iLlaFDRwAAA==
+    headers:
+      cache-control: [private]
+      content-encoding: [gzip]
+      content-type: [text/xml; charset=utf-8]
+      date: ['Fri, 01 Apr 2016 12:44:21 GMT']
+      server: [Microsoft-IIS/7.5]
+      set-cookie: ['exchangecookie=50900b25a7c841d5a6de4c16d6d8fa57; expires=Sat,
+          01-Apr-2017 12:44:21 GMT; path=/; HttpOnly']
+      vary: [Accept-Encoding]
+      x-aspnet-version: [2.0.50727]
+      x-powered-by: [ASP.NET]
+    status: {code: 200, message: OK}
+- request:
+    body: "<?xml version=\"1.0\" ?>\n<soap:Envelope xmlns:m=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+      \ xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+      \ xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
+      >\n\t\n    \n\t<soap:Header>\n\t\t\n      \n\t\t<t:ExchangeImpersonation>\n\t\
+      \t\t\n        \n\t\t\t<t:ConnectingSID>\n\t\t\t\t\n          \n\t\t\t\t<t:PrincipalName>c1odoo@linkingup.org</t:PrincipalName>\n\
+      \t\t\t\t\n        \n\t\t\t</t:ConnectingSID>\n\t\t\t\n      \n\t\t</t:ExchangeImpersonation>\n\
+      \t\t\n    \n\t</soap:Header>\n\t\n  \n\t<soap:Body>\n\t\t\n    \n    \n\t\t\
+      <m:CreateItem>\n\t\t\t\n      \n\t\t\t<m:SavedItemFolderId>\n\t\t\t\t\n    \
+      \    \n\t\t\t\t<t:FolderId Id=\"AAAQAGMxb2Rvb0BoaWdoY28uZnIALgAAAAAAOO3rSaghRkyF3KhRUnXPkwEAAIlRgN5j1Emsqr28n7FzvwAAAHTcqQAA\"\
+      />\n\t\t\t\t\n      \n\t\t\t</m:SavedItemFolderId>\n\t\t\t\n      \n\t\t\t<m:Items>\n\
+      \t\t\t\t\n        \n          \n\t\t\t\t<t:Contact>\n\t\t\t\t\t<t:Body BodyType=\"\
+      Text\"/>\n\t\t\t\t\t\n\n\t\t\t\t\t<t:Categories>\n\t\t\t\t\t\t<t:String>Odoo</t:String>\n\
+      \t\t\t\t\t</t:Categories>\n\t\t\t\t\t\n\n\t\t\t\t\t<t:ExtendedProperty>\n\t\t\
+      \t\t\t\t<t:ExtendedFieldURI PropertyTag=\"14925\" PropertyType=\"Short\"/>\n\
+      \t\t\t\t\t\t\n\n\t\t\t\t\t\t<t:Value>1</t:Value>\n\t\t\t\t\t</t:ExtendedProperty>\n\
+      \t\t\t\t\t\n\n\n\n\t\t\t\t\t<t:FileAsMapping>FirstSpaceLast</t:FileAsMapping>\n\
+      \t\t\t\t\t\n\n\n\t\t\t\t\t<t:GivenName>John</t:GivenName>\n\t\t\t\t\t\n\n\n\n\
+      \n\n\t\t\t\t\t<t:EmailAddresses>\n\t\t\t\t\t\t<t:Entry Key=\"EmailAddress1\"\
+      >toot@tooto.com</t:Entry>\n\t\t\t\t\t</t:EmailAddresses>\n\t\t\t\t\t\n\n\t\t\
+      \t\t\t<t:PhysicalAddresses>\n\t\t\t\t\t\t<t:Entry Key=\"Business\">\n\t\t\t\t\
+      \t\t\t<t:Street>Abbey Road // Beatles</t:Street>\n\t\t\t\t\t\t\t\n\n\n\n\t\t\
+      \t\t\t\t\t<t:CountryOrRegion>United Kingdom</t:CountryOrRegion>\n\t\t\t\t\t\t\
+      \t\n\n\t\t\t\t\t\t\t<t:PostalCode>1969</t:PostalCode>\n\t\t\t\t\t\t</t:Entry>\n\
+      \t\t\t\t\t</t:PhysicalAddresses>\n\t\t\t\t\t\n\n\t\t\t\t\t<t:PhoneNumbers>\n\
+      \t\t\t\t\t\t<t:Entry Key=\"PrimaryPhone\">+44123456789</t:Entry>\n\t\t\t\t\t\
+      </t:PhoneNumbers>\n\t\t\t\t\t\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t<t:Surname>Lennon</t:Surname>\n\
+      \t\t\t\t\t\n\n\n\t\t\t\t</t:Contact>\n\t\t\t\t\n        \n      \n\t\t\t</m:Items>\n\
+      \t\t\t\n    \n\t\t</m:CreateItem>\n\t\t\n\n  \n\t</soap:Body>\n\t\n\n</soap:Envelope>\n"
+    headers:
+      Accept: [text/xml]
+      Accept-Encoding: ['gzip, deflate']
+      Authorization: [Basic YW9kb29AbGlua2luZ3VwLm9yZzpIaWdoQ28yMDE2]
+      Connection: [keep-alive]
+      Content-Length: ['1994']
+      Content-Type: [text/xml; charset=utf-8]
+      User-Agent: [python-requests/2.9.1]
+    method: POST
+    uri: https://java.linkingup.org/EWS/Exchange.asmx
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcpl
+        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/Ih7/Hu8W
+        ZXqZ101RLT/7aHe881GaL6fVrFhefPbRuj3fPvjo9zh63Dw6XV7mZbXKU2q/bB41n300b9vVo7t3
+        m+k8X2TNmD5vqmw1ruqLu/jlbq5v3P0I7387z2Z5ffR4/uh1XlN/Pyldni3Pq/SL7Kcr8wHhsP9R
+        +kWx9D6595E0ebIuytmL9WKS19Rs7562Cz6mDwXDeQ/DRTGtq6Y6b8fTanE3fzedZ8uL/G5D+BTT
+        vLm7t7Pz6d32epU3CuPDITx61xQWytXV1fjqHhOIGu7e/b2/eP6aAW8Xy6bNltPcvTW7+a2P7h49
+        vusI2zx6Us2ufwjdHj1ePDqp86zNz9p88SpvVtWyMXyx+Ho0W+RNk104srVfD4yQHggatL5QwHGk
+        9dvU/H1SZg3N+uv1lECGgE6qWX70ojqt66p+fLfzObUDWOqlfXRSLdts2uJXfHY2S8+IqsfHxz9x
+        /PkX7yZ7ry4nO0+q7Luz6vfZO1j/1PLs+NXFMT9ffnmvfp1dzF+9vX527/eav/pq+Xu/fHs1PT4+
+        K19dvLj/07uni+YX1XsHywfPfnB5RS98+830F/3E8eD3T15+592n9PVH6QkT6/fKrz/76BQvPPl9
+        uMPiJz8/vrd4+dXr7PoXXU6uz5vf+8u79PHpwbJ6w9zljeauHeLdDZQ88knjaB995QjcC55lNjb6
+        5ej/AW4tQreSBAAA
+    headers:
+      cache-control: [private]
+      content-encoding: [gzip]
+      content-type: [text/xml; charset=utf-8]
+      date: ['Fri, 01 Apr 2016 12:44:21 GMT']
+      server: [Microsoft-IIS/7.5]
+      set-cookie: ['exchangecookie=c072073ac00b4628a95f618d24b6cfa3; expires=Sat,
+          01-Apr-2017 12:44:22 GMT; path=/; HttpOnly']
+      vary: [Accept-Encoding]
+      x-aspnet-version: [2.0.50727]
+      x-powered-by: [ASP.NET]
+    status: {code: 200, message: OK}
+- request:
+    body: "<?xml version=\"1.0\" ?>\n<soap:Envelope xmlns:m=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+      \ xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+      \ xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
+      >\n\t\n    \n\t<soap:Header>\n\t\t\n      \n\t\t<t:ExchangeImpersonation>\n\t\
+      \t\t\n        \n\t\t\t<t:ConnectingSID>\n\t\t\t\t\n          \n\t\t\t\t<t:PrincipalName>c1odoo@linkingup.org</t:PrincipalName>\n\
+      \t\t\t\t\n        \n\t\t\t</t:ConnectingSID>\n\t\t\t\n      \n\t\t</t:ExchangeImpersonation>\n\
+      \t\t\n    \n\t</soap:Header>\n\t\n  \n\t<soap:Body>\n\t\t\n    \n    \n\t\t\
+      <m:GetItem>\n\t\t\t\n        \n\t\t\t<m:ItemShape>\n\t\t\t\t\n           \n\t\
+      \t\t\t<t:BaseShape>AllProperties</t:BaseShape>\n\t\t\t\t\n           \n\t\t\t\
+      \t<t:AdditionalProperties>\n\t\t\t\t\t\n               \n\t\t\t\t\t<!-- We will\
+      \ always request some additional information. -->\n\t\t\t\t\t\n            \
+      \   \n\t\t\t\t\t<!-- This can be made more efficient, but WTH -->\n\t\t\t\t\t\
+      \n\n               \n\t\t\t\t\t<!-- Gender -->\n\t\t\t\t\t\n               \n\
+      \t\t\t\t\t<t:ExtendedFieldURI PropertyTag=\"14925\" PropertyType=\"Short\"/>\n\
+      \t\t\t\t\t\n\n               \n\t\t\t\t\t<!-- Last Modifiation Time -->\n\t\t\
+      \t\t\t\n               \n\t\t\t\t\t<t:ExtendedFieldURI PropertyTag=\"12296\"\
+      \ PropertyType=\"SystemTime\"/>\n\t\t\t\t\t\n\n               \n\t\t\t\t\t<!--\
+      \ Any other client specified extended properties -->\n\t\t\t\t\t\n         \
+      \      \n\n           \n\t\t\t\t</t:AdditionalProperties>\n\t\t\t\t\n      \
+      \  \n\t\t\t</m:ItemShape>\n\t\t\t\n\n        \n\t\t\t<m:ItemIds>\n\t\t\t\t\n\
+      \          \n              \n\t\t\t\t<t:ItemId Id=\"AAAQAGMxb2Rvb0BoaWdoY28uZnIARgAAAAAAOO3rSaghRkyF3KhRUnXPkwcAAIlRgN5j1Emsqr28n7FzvwAAAHTcqQAAAIlRgN5j1Emsqr28n7FzvwAABPJx6AAA\"\
+      />\n\t\t\t\t\n          \n        \n\t\t\t</m:ItemIds>\n\t\t\t\n    \n\t\t</m:GetItem>\n\
+      \t\t\n\n  \n\t</soap:Body>\n\t\n\n</soap:Envelope>\n"
+    headers:
+      Accept: [text/xml]
+      Accept-Encoding: ['gzip, deflate']
+      Authorization: [Basic YW9kb29AbGlua2luZ3VwLm9yZzpIaWdoQ28yMDE2]
+      Connection: [keep-alive]
+      Content-Length: ['1731']
+      Content-Type: [text/xml; charset=utf-8]
+      User-Agent: [python-requests/2.9.1]
+    method: POST
+    uri: https://java.linkingup.org/EWS/Exchange.asmx
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAEAO29B2AcSZYlJi9tynt/SvVK1+B0oQiAYBMk2JBAEOzBiM3mkuwdaUcjKasqgcpl
+        VmVdZhZAzO2dvPfee++999577733ujudTif33/8/XGZkAWz2zkrayZ4hgKrIHz9+fB8/Ih7/Hu8W
+        ZXqZ101RLT/7aHe881GaL6fVrFhefPbRuj3fPvjo9zh63Dw6XV7mZbXKU2q/bB41n300b9vVo7t3
+        m+k8X2TNmD5vqmw1ruqLu/jlbq5v3P0I7387z2Z5ffR4/uh1XlN/Pyldni3Pq/SL7Kcr8wHhsP9R
+        +kWx9D6595E0ebIuytmL9WKS19Rs7562Cz6mDwXDeQ/DRTGtq6Y6b8fTanE3fzedZ8uL/G5D+BTT
+        vLm7t7Pz6d32epU3CuPDITx61xQWytXV1fjqHhOIGu7e/b2/eP6aAW8Xy6bNltPcvTW7+a2P7h49
+        vusI2zx6Us2ufwjdHj1ePPo8b8/afPEqb1bVsjFMsfh6BFvkTZNdOJq1Xw+M0B3YGbS+UMARjPWr
+        1Px9UmYNzffr9ZTghVBOqll+9KI6reuqfny38zm1A1jqon10Ui3bbNriV3x2NkvPiJ7Hx8c/cfz5
+        F+8me68uJztPquy7s+r32TtY/9Ty7PjVxTE/X355r36dXcxfvb1+du/3mr/6avl7v3x7NT0+Pitf
+        Xby4/9O7p4vmF9V7B8sHz35weUUvfPvN9Bf9xPHg909efufdp/T1R+kJU+r3yq8/++gULzz5fbjD
+        4ic/P763ePnV6+z6F11Ors+b3/vLu/Tx6cGyegO+ah+9zOp82T6rSmKuW4zk+caRnN44kgDTY2B6
+        /NlnggloydNzdPbyi7ES+fFd/wtq9Xo9+emciP+dar5Mn+fLZbVEG/MxWuTLpmiLy6K9pumsF1nJ
+        DbxPqRHLEP55Q9z02Udv8netYPE0a/M3xSJ/lU/z4jKfHe3t7H66vbO/vbP7Znfv0f7+o729nwLA
+        XkN0XfwgP7p/b5c7xO/gFmp3UdVFLui3NWncoy9nVcWN5E/8GrY7W6yqmoXWG4P3IZo0NOhF0bbU
+        93lWNjk38T7kNk/r7Lw9auu1fi1/81fP6mrxRe6/q5/wt8T++TKArJ/wt18tF2Q7zouwb+9Tj5RE
+        +vZGMnIj76WTOs8wiJveM+3watGsyuz6ZHrX++tNxX99O2uOW2Ko+YL6aRzOnc+p5em7lkaZz17W
+        ZNNq4Rbz2bMiL2dfvTpLzZdvMrKeO+/uZfuzj9yHzFKv5zRXwlM/mZXr/Ii5Qn7Fb5v6ea++d3YO
+        en1fNyQzII+PwBApN+N0si7bdU1sUm8/e8WMqh/Qd8+KMj9uurKon9rvv8hWK3D5s6Ju2terbJo/
+        z5rWtTTfu0l7kS3yLlT/K2r5Ocnc0rZDA/cJsK4WqzJvc/M39x00d5/Q10CIf3f92Y/w9rosYzjZ
+        z5kunS5PF1lRHs9mNRkaEerTZVtfp6KkvS93Pzpqq6r9PfFPBcvHU4G2Mik9OC/n100xzQaBP1k3
+        xVLMG6uYPG+PjieT/Dp9VWWz9O7d9AkJTZk3qoLwPdNsDRhf1q/yC/LHjr5aFiRZ6e9FczMTpLot
+        gEtFvkXJNnL34acP0cr7KBxJFO+X82qZi1fXHcfLulhk9TW3+Ojok/198gX373/64OBhF24I4vW6
+        XoaTaT6RQaj5vmtt+t0hv+HIdwScm9FvfwQXDfaEfTXjRB/9P1SuEBN3CwAA
+    headers:
+      cache-control: [private]
+      content-encoding: [gzip]
+      content-type: [text/xml; charset=utf-8]
+      date: ['Fri, 01 Apr 2016 12:44:21 GMT']
+      server: [Microsoft-IIS/7.5]
+      set-cookie: ['exchangecookie=e440cc12ea9246cc87093669250ea9e0; expires=Sat,
+          01-Apr-2017 12:44:22 GMT; path=/; HttpOnly']
+      vary: [Accept-Encoding]
+      x-aspnet-version: [2.0.50727]
+      x-powered-by: [ASP.NET]
+    status: {code: 200, message: OK}
+version: 1

@@ -1,0 +1,8 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_exchange_partner_contact_user","exchange partnec contact user","connector_exchange.model_exchange_res_partner","base.group_user",1,0,0,0
+"access_exchange_partner_contact_manager","exchange partner contact manager","connector_exchange.model_exchange_res_partner","connector.group_connector_manager",1,1,1,1
+"access_exchange_backend_user","exchange backend user","connector_exchange.model_exchange_backend","base.group_user",1,0,0,0
+"access_exchange_backend_manager","exchange_backend manager","connector_exchange.model_exchange_backend","connector.group_connector_manager",1,1,0,0
+access_res_users_backend_folder,access_res_users_backend_folder,connector_exchange.model_res_users_backend_folder,,1,1,1,1
+"access_exchange_calendar_user","exchange calendar user","connector_exchange.model_exchange_calendar_event","base.group_user",1,0,0,0
+"access_exchange_calendar_manager","exchange calendar manager","connector_exchange.model_exchange_calendar_event","connector.group_connector_manager",1,1,1,1

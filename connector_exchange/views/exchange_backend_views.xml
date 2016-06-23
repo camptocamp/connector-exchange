@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+
+    <record id="view_exchange_backend_form" model="ir.ui.view">
+      <field name="name">exchange.backend.form</field>
+      <field name="model">exchange.backend</field>
+      <field name="arch" type="xml">
+        <form string="Exchange Backend" delete="false">
+          <header>
+          </header>
+          <sheet>
+            <label for="name" class="oe_edit_only"/>
+            <h1>
+              <field name="name" class="oe_inline" />
+            </h1>
+            <group name="exchange" string="Exchange Configuration">
+              <notebook>
+                <page string="API" name="api">
+                  <group colspan="4" col="4">
+                    <field name="version" colspan="4"/>
+                    <field name="certificate_location" colspan="4"/>
+                  </group>
+                  <group col="4">
+                    <field name="location"/>
+                    <field name="username"/>
+                    <field name="password" password="1"/>
+                  </group>
+                </page>
+              </notebook>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_exchange_backend_tree" model="ir.ui.view">
+      <field name="name">exchange.backend.tree</field>
+      <field name="model">exchange.backend</field>
+      <field name="arch" type="xml">
+        <tree string="Exchange Backend" delete="false">
+          <field name="name"/>
+          <field name="version"/>
+          <field name="certificate_location"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="action_exchange_backend" model="ir.actions.act_window">
+      <field name="name">Exchange Backends</field>
+      <field name="res_model">exchange.backend</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_exchange_backend"
+        name="Backend"
+        parent="menu_exchange_root"
+        action="action_exchange_backend"/>
+
+  </data>
+</openerp>

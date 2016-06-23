@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_users_form_connector_exchange" model="ir.ui.view">
+            <field name="name">res.users.form.connector.exchange</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <notebook colspan="4" position="inside">
+                    <page string="Exchange">
+                        <group>
+                            <field name="default_backend" widget="selection"/>
+                            <field name="exchange_synch"/>
+                            <field name="exchange_calendar_sync"/>
+                            <field name="send_calendar_invitations" attrs="{'invisible': [('exchange_calendar_sync', '=', False)]}"/>
+
+                            <label for="backend_folder_ids"  attrs="{'invisible':[('exchange_synch','=',False), ('exchange_calendar_sync','=',False)]}" />
+                            <field name="backend_folder_ids" attrs="{'invisible':[('exchange_synch','=',False), ('exchange_calendar_sync','=',False)]}" nolabel="1">
+                                <tree>
+                                    <field name="backend_id"/>
+                                    <field name="name"/>
+                                    <field name="folder_id"/>
+                                    <field name="folder_type"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+    </data>
+</openerp>
