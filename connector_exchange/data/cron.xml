@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data noupdate="1">
+
+    <record forcecreate="True" id="ir_cron_sync_import_contact_partner" model="ir.cron">
+      <field name="name">Connector Exchange - Import Contacts</field>
+      <field eval="False" name="active"/>
+      <field name="user_id" ref="base.user_root"/>
+      <field name="interval_number">1</field>
+      <field name="interval_type">days</field>
+      <field name="numbercall">-1</field>
+      <field eval="False" name="doall"/>
+      <field name="model">exchange.backend</field>
+      <field name="function">cron_import_contact_partner</field>
+      <field name="args">()</field>
+    </record>
+
+    <record forcecreate="True" id="ir_cron_sync_export_contact_partner" model="ir.cron">
+      <field name="name">Connector Exchange - Export Contacts</field>
+      <field eval="False" name="active"/>
+      <field name="user_id" ref="base.user_root"/>
+      <field name="interval_number">1</field>
+      <field name="interval_type">days</field>
+      <field name="numbercall">-1</field>
+      <field eval="False" name="doall"/>
+      <field name="model">exchange.backend</field>
+      <field name="function">cron_export_contact_partner</field>
+      <field name="args">()</field>
+    </record>
+
+  </data>
+</openerp>

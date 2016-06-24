@@ -60,6 +60,16 @@ class ExchangeBackend(models.Model):
     contact_bind_ids = fields.One2many('exchange.res.partner', 'backend_id',
                                        string="Contact bindings")
 
+    @api.model
+    def cron_export_contact_partner(self):
+        for backend in self.search([]):
+            backend.export_contact_partners()
+
+    @api.model
+    def cron_import_contact_partner(self):
+        for backend in self.search([]):
+            backend.import_contact_partners()
+
     @api.multi
     def export_contact_partners(self):
         """ Export partners to exchange backend """
