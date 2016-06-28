@@ -4,7 +4,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 import logging
-from datetime import datetime
+import datetime
 from pyews.ews.calendar import CalendarItem, Attendee
 from pyews.ews.data import (SensitivityType,
                             LegacyFreeBusyStatusType,
@@ -25,7 +25,7 @@ from ...unit.exporter import export_delete_record
 
 _logger = logging.getLogger(__name__)
 
-EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
 
 # UTILITY FUNTIONS
@@ -49,13 +49,15 @@ def get_exchange_month_from_date(month):
     return maps[month]
 
 
-def convert_to_exchange(date, time=False, rec=False):
+def convert_to_exchange(date, time=False, rec=False, add_day=False):
     fmt = DEFAULT_SERVER_DATE_FORMAT
     if time:
         fmt = DEFAULT_SERVER_DATETIME_FORMAT
-    odoo_dt = datetime.strptime(date, fmt)
+    odoo_dt = datetime.datetime.strptime(date, fmt)
     if rec:
         return odoo_dt.strftime(EXCHANGE_REC_DATE_FORMAT)
+    if add_day:
+        odoo_dt = odoo_dt + datetime.timedelta(days=1)
     return odoo_dt.strftime(EXCHANGE_DATETIME_FORMAT)
 
 # MAPPINGS DECLARATION
@@ -114,6 +116,8 @@ class CalendarEventExporter(ExchangeExporter):
                 self.binding_record.start, time=True)
             )
             calendar.reminder_minutes_before_start.set(alarm.duration_minutes)
+        else:
+            calendar.is_reminder_set.set(False)
 
     def fill_start_end(self, calendar):
         if self.binding_record.allday:
@@ -122,7 +126,7 @@ class CalendarEventExporter(ExchangeExporter):
                 self.binding_record.start_date, time=False)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding_record.stop_date, time=False)
+                self.binding_record.stop_date, time=False, add_day=True)
             )
         else:
             calendar.is_all_day_event.set(False)
@@ -277,7 +281,6 @@ class CalendarEventExporter(ExchangeExporter):
         """
 
         """
-
         if fields is None:
             fields = SIMPLE_VALUE_FIELDS.keys()
 
