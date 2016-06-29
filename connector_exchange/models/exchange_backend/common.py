@@ -131,6 +131,16 @@ class ExchangeBackend(models.Model):
                                         priority=30)
         return True
 
+    @api.model
+    def cron_export_calendar(self):
+        for backend in self.search([]):
+            backend.export_user_calendar()
+
+    @api.model
+    def cron_import_calendar(self):
+        for backend in self.search([]):
+            backend.import_user_calendar()
+
     @api.multi
     def import_user_calendar(self):
         """ Import events from exchange backend """
@@ -148,8 +158,8 @@ class ExchangeBackend(models.Model):
                 )
                 existing_events = existing_events.mapped('external_id')
 
-                # find folder for this user. If not exists do not try to import
-                folder = user.find_folder(backend.id, create=False,
+                # find folder for this user. If not exists, create one
+                folder = user.find_folder(backend.id, create=True,
                                           default_name='Odoo',
                                           folder_type='calendar')
                 if not folder:
@@ -207,7 +217,7 @@ class ExchangeBackend(models.Model):
         return True
 
     @api.multi
-    def export_user_calendar(self, sync_session):
+    def export_user_calendar(self):
         self.ensure_one()
         _logger.debug('export calendar events')
         users = self.env['res.users'].search(

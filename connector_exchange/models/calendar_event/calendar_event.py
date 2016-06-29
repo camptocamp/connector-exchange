@@ -30,16 +30,19 @@ class CalendarEvent(models.Model):
             list(set([calendar_id2real_id(calendar_id=cal.id) for cal in self])
                  )
             )
-        for calendar in self.browse(real_calendars):
-            bindings = calendar.exchange_bind_ids.filtered(
-                lambda a: a.backend_id == backend and a.user_id == user and
-                a['class'] != 'private')
-            if not bindings:
-                self.env['exchange.calendar.event'].create(
-                    {'backend_id': backend.id,
-                     'user_id': user.id,
-                     'openerp_id': calendar.id}
-                )
+        if self.env.context.get('job_uuid', False):
+            return True
+        else:
+            for calendar in self.browse(real_calendars):
+                bindings = calendar.exchange_bind_ids.filtered(
+                    lambda a: a.backend_id == backend and a.user_id == user and
+                    a['class'] != 'private')
+                if not bindings:
+                    self.env['exchange.calendar.event'].create(
+                        {'backend_id': backend.id,
+                         'user_id': user.id,
+                         'openerp_id': calendar.id}
+                    )
         return True
 
     @api.model
