@@ -123,10 +123,10 @@ class CalendarEventExporter(ExchangeExporter):
         if self.binding_record.allday:
             calendar.is_all_day_event.set(True)
             calendar.start.set(convert_to_exchange(
-                self.binding_record.start_date, time=False)
+                self.binding_record.start, time=True)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding_record.stop_date, time=False, add_day=True)
+                self.binding_record.stop, time=True, add_day=True)
             )
         else:
             calendar.is_all_day_event.set(False)
@@ -228,7 +228,7 @@ class CalendarEventExporter(ExchangeExporter):
             elif evt.rrule_type == 'weekly':
                 weekly = calendar.recurrence.week_rec
                 days = []
-                for day in ('mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'):
+                for day in ExchangeDays:
                     if getattr(evt, day):
                         days.append(day)
                 days = days.map(lambda x: ExchangeDays['x'])
