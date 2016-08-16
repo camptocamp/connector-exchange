@@ -315,14 +315,13 @@ class CalendarEventExporter(ExchangeExporter):
         """
         br = self.binding_record
         odoo_folder = br.user_id.find_folder(br.backend_id.id, create=True,
-                                             default_name='Odoo',
                                              folder_type='calendar')
         adapter = self.backend_adapter
         folder = None
         if folder_id:
             folder = adapter.find_folder(odoo_folder)
         if not folder:
-            folder = adapter.create_folder(odoo_folder)
+            folder = adapter.find_folder(odoo_folder)
             odoo_folder.folder_id = folder.Id
         return folder
 
@@ -331,6 +330,7 @@ class CalendarEventExporter(ExchangeExporter):
         calendar = exchange_service.GetCalendarItems(
             [self.binding_record.external_id])[0]
         self.fill_calendar_event(calendar, fields)
+        calendar.categories.add('Odoo')
 
         return calendar
 
@@ -399,7 +399,8 @@ class CalendarEventExporter(ExchangeExporter):
         response = self._update(record)
         self.binding_record.with_context(
             connector_no_export=True).write(
-            {'change_key': response[0].change_key.value})
+            {'external_id': response[0].itemid.value,  # in case of convertId
+             'change_key': response[0].change_key.value})
 
     def change_key_equals(self, exchange_record):
         return (
@@ -410,11 +411,11 @@ class CalendarEventExporter(ExchangeExporter):
         user = self.binding_record.user_id
         self.openerp_user = user
         self.backend_adapter.set_primary_smtp_address(user)
-
-        if not self.binding_record.external_id:
+        external_id = self.binding_record.external_id
+        if not external_id:
             fields = None
 
-        if not self.binding_record.external_id:
+        if not external_id:
             self.create_exchange_calendar_event(fields)
         else:
             # we have a binding
@@ -433,11 +434,13 @@ class CalendarEventExporter(ExchangeExporter):
                         user.id,
                         exchange_record)
             else:
-                # create contact in exchange and update its `external_id`
-                self.create_exchange_calendar_event(fields)
+                # binding defined in Odoo but does not exist anymore
+                # in Exchange --> delete it from Odoo
+                self.binding_record.openerp_id.with_context(
+                    connector_no_export=True).unlink()
+                return
 
-        return _("Record exported with ID %s on Exchange") % (
-            self.binding_record.external_id)
+        return _("Record exported with ID %s on Exchange") % external_id
 
 
 @exchange_2010

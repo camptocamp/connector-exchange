@@ -148,6 +148,7 @@ class ExchangeBackend(models.Model):
         session = ConnectorSession.from_env(self.env)
         users = self.env['res.users'].search(
             [('exchange_calendar_sync', '=', True)])
+
         for backend in self:
             for user in users:
                 imported_events = []
@@ -160,7 +161,7 @@ class ExchangeBackend(models.Model):
 
                 # find folder for this user. If not exists, create one
                 folder = user.find_folder(backend.id, create=True,
-                                          default_name='Odoo',
+                                          default_name="Calendar",
                                           folder_type='calendar')
                 if not folder:
                     continue
@@ -191,12 +192,19 @@ class ExchangeBackend(models.Model):
 
                 exchange_events = adapter.ews.FindCalendarItems(
                     exchange_folder,
-                    ids_only=True)
+                    ids_only=False)
                 # for each event found, run import_record if sensitivity
-                # is not "Private"
+                # is not "Private" or "Personnal"
+                # and if categories contains Odoo
                 for exchange_event in exchange_events:
                     sensitivity = exchange_event.sensitivity
-                    if (sensitivity.value != SensitivityType.Private and
+                    odoo_categ = False
+                    for categ in exchange_event.categories.entries:
+                        if categ.value == 'Odoo':
+                            odoo_categ = True
+                            break
+                    if (odoo_categ and
+                            sensitivity.value != SensitivityType.Private and
                             sensitivity.value != SensitivityType.Personal):
                         import_record.delay(session,
                                             'exchange.calendar.event',
@@ -213,7 +221,8 @@ class ExchangeBackend(models.Model):
                      ('user_id', '=', user.id)]
                 )
                 calendar_event_ids = to_delete_ids.mapped('openerp_id')
-                calendar_event_ids.unlink()
+                calendar_event_ids.with_context(
+                    connector_no_export=True).unlink()
         return True
 
     @api.multi
