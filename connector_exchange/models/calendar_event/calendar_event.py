@@ -48,8 +48,9 @@ class CalendarEvent(models.Model):
     @api.model
     def create(self, values):
         new_event = super(CalendarEvent, self).create(values)
-        new_event.try_autobind(new_event.user_id,
-                               new_event.user_id.default_backend)
+        if not self.env.context.get('job_uuid'):
+            new_event.try_autobind(new_event.user_id,
+                                   new_event.user_id.default_backend)
         return new_event
 
     @api.multi
