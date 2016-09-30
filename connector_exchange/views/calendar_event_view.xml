@@ -10,7 +10,7 @@
                     <attribute name="widget">html</attribute>
                 </field>
                 <notebook position="inside">
-                    <page string="Exchange">
+                    <page string="Exchange" groups="connector.group_connector_manager">
                         <page name="connector" position="inside">
                           <group string="Exchange Bindings" name="exchange_bindings">
                             <field name="exchange_bind_ids" nolabel="1">

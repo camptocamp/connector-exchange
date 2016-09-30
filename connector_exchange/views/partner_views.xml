@@ -12,7 +12,7 @@
           <attribute name="groups">connector.group_connector_manager</attribute>
         </page>
         <page name="connector" position="inside">
-          <group string="Exchange Bindings" name="exchange_bindings">
+          <group string="Exchange Bindings" name="exchange_bindings" groups="connector.group_connector_manager">
             <field name="exchange_bind_ids" nolabel="1">
                 <tree>
                     <field name="backend_id"/>
