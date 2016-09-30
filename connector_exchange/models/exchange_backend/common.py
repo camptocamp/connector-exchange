@@ -78,6 +78,7 @@ class ExchangeBackend(models.Model):
         users = self.env['res.users'].search([('exchange_synch', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # this will trigger an export for these contacts
                 user.exchange_contact_ids.try_autobind(user, backend)
         return True
@@ -90,6 +91,7 @@ class ExchangeBackend(models.Model):
         users = self.env['res.users'].search([('exchange_synch', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # find folder for this user. If not exists do not try to import
                 folder = user.find_folder(backend.id, create=False)
                 if not folder:
@@ -159,6 +161,7 @@ class ExchangeBackend(models.Model):
 
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 imported_events = []
                 existing_events = user.exchange_calendar_ids.mapped(
                     'exchange_bind_ids')
@@ -241,6 +244,7 @@ class ExchangeBackend(models.Model):
             [('exchange_calendar_sync', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # this will trigger an export for these contacts
                 user.exchange_calendar_ids.try_autobind(user, backend)
         return True
