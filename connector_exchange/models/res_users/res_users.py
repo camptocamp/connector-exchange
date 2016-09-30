@@ -79,8 +79,7 @@ class ResUsers(models.Model):
                                       required=True,
                                       default=_get_default_backend)
 
-    # @api.onchange('exchange_synch', 'exchange_calendar_sync')
-    @api.multi
+    @api.onchange('exchange_synch', 'exchange_calendar_sync')
     def create_odoo_category(self):
         """
         Try to create odoo category on Exchange.

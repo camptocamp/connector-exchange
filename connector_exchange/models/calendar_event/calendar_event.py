@@ -47,7 +47,14 @@ class CalendarEvent(models.Model):
 
     @api.model
     def create(self, values):
-        new_event = super(CalendarEvent, self).create(values)
+        user = values.get('user_id')
+        if not user:
+            user = self.env.user.id
+        no_mail = False
+        if self.env['res.users'].browse(user).send_calendar_invitations:
+            no_mail = True
+        new_event = super(CalendarEvent, self.with_context(
+            no_mail_to_attendees=no_mail)).create(values)
         if not self.env.context.get('job_uuid'):
             new_event.try_autobind(new_event.user_id,
                                    new_event.user_id.default_backend)
@@ -59,7 +66,14 @@ class CalendarEvent(models.Model):
         # FIXME: manage alteration of recurrent events
         # session = ConnectorSession.from_env(self.env)
         for rec in self:
-            super(CalendarEvent, rec).write(values)
+            user = values.get('user_id')
+            if not user:
+                user = rec.user_id.id
+            no_mail = False
+            if self.env['res.users'].browse(user).send_calendar_invitations:
+                no_mail = True
+            super(CalendarEvent, rec.with_context(
+                no_mail_to_attendees=no_mail)).write(values)
             if isinstance(rec.id, basestring):
                 if '-' in rec.id:
                     # we have a virtual recurrent event linked
@@ -72,7 +86,8 @@ class CalendarEvent(models.Model):
                         # 2. create a delete event on the real id
                         # previously found
                         self.browse(real_id).with_context(
-                            connector_no_export=True).unlink()
+                            connector_no_export=True,
+                            no_mail_to_attendees=no_mail).unlink()
                         # delay_disable_all_bindings(session, self._name,
                         # real_id)
 
