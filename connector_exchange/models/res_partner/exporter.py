@@ -186,6 +186,8 @@ class PartnerExporter(ExchangeExporter):
         contact = exchange_service.GetContacts(
             [self.binding_record.external_id])[0]
         self.fill_contact(contact, fields)
+        # add Odoo category on create contact on exchange
+        contact.categories.add('Odoo')
 
         return contact
 

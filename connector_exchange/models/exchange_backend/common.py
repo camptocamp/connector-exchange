@@ -123,12 +123,20 @@ class ExchangeBackend(models.Model):
                                                           ids_only=True)
                 # for each contact found, run import_record
                 for exchange_contact in exchange_contacts:
-                    import_record.delay(session,
-                                        'exchange.res.partner',
-                                        backend.id,
-                                        user.id,
-                                        exchange_contact.itemid.value,
-                                        priority=30)
+                    odoo_categ = False
+                    for categ in exchange_contact.categories.entries:
+                        if categ.value == 'Odoo':
+                            odoo_categ = True
+                            break
+                    if odoo_categ:
+                        import_record.delay(
+                            session,
+                            'exchange.res.partner',
+                            backend.id,
+                            user.id,
+                            exchange_contact.itemid.value,
+                            sync_session_id=sync_session.id,
+                            priority=30)
         return True
 
     @api.model
