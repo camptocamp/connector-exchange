@@ -5,7 +5,8 @@
 
 import logging
 
-from pyews.ews.data import FolderClass, SensitivityType
+from pyews.ews.data import FolderClass, SensitivityType, DistinguishedFolderId
+from pyews.ews.folder import Folder
 
 from openerp import models, fields, api
 from openerp.addons.connector.session import ConnectorSession
@@ -192,13 +193,11 @@ class ExchangeBackend(models.Model):
                     )
                 adapter.ews.get_root_folder()
                 exchange_folder = (
-                    adapter.ews.root_folder.FindFolderByDisplayName(
-                        str(folder.name),
-                        types=[FolderClass.Calendars],
-                        recursive=True))
-                if exchange_folder:
-                    exchange_folder = exchange_folder[0]
-                else:
+                    Folder.bind(
+                        adapter.ews,
+                        DistinguishedFolderId.calendar)
+                )
+                if not exchange_folder:
                     continue
 
                 exchange_events = adapter.ews.FindCalendarItems(

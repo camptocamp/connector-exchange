@@ -3,6 +3,7 @@
 # Copyright 2016 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
+import base64
 import logging
 import pytz
 import datetime
@@ -181,6 +182,12 @@ class CalendarEventImporter(ExchangeImporter):
                          }
                     )
                     vals['partner_ids'].append((4, new_partner.openerp_id.id))
+
+        # add owner of the event as attendee
+        added_partner_ids = [x[1] for x in vals['partner_ids']]
+        if self.openerp_user.partner_id.id not in added_partner_ids:
+            vals['partner_ids'].append((4, self.openerp_user.partner_id.id))
+
         return vals
 
     def fill_recurrency(self, event_instance):
@@ -326,7 +333,7 @@ class CalendarEventImporter(ExchangeImporter):
             fname = attachment.name.value
             content = attachment.content.value
 
-            odoo_att = attach_by_name[fname]
+            odoo_att = attach_by_name.get(fname)
             # for att in odoo_att:
             #     if att.name == fname:
             #         odoo_att += att
@@ -342,17 +349,18 @@ class CalendarEventImporter(ExchangeImporter):
             else:
                 # create a new one for the binding
                 # file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', fname)
-
-                att_obj.create(
-                    {
-                        'name': fname,
-                        'datas': content,
-                        'datas_fname': fname,
-                        'res_model': 'calendar.event',
-                        'res_id': binding.openerp_id.id,
-                        'type': 'binary'
-                    }
-                )
+                # att = att_obj.create(
+                #     {
+                #         'name': fname,
+                #         'datas': content,
+                #         'datas_fname': fname,
+                #         'res_model': 'calendar.event',
+                #         'res_id': binding.openerp_id.id,
+                #         'type': 'binary'
+                #     }
+                # )
+                binding.openerp_id.message_post(
+                    attachments=[(fname, base64.b64decode(str(content)))])
 
         return True
 
@@ -577,3 +585,20 @@ class CalendarEventImporter(ExchangeImporter):
         self.bind_attachments(binding, event_id)
 
         self.manage_modified_deleted_occurrences(binding, event_id)
+
+    def _update(self, binding, data, context_keys=None):
+        """ Update an Odoo record """
+        context_keys = {}
+        if self.openerp_user.send_calendar_invitations:
+            context_keys.update({"no_mail_to_attendees": True})
+        return super(CalendarEventImporter, self)._update(
+            binding, data, context_keys=context_keys
+        )
+
+    def _create(self, data, context_keys=None):
+        context_keys = {}
+        if self.openerp_user.send_calendar_invitations:
+            context_keys.update({"no_mail_to_attendees": True})
+        return super(CalendarEventImporter, self)._create(
+            data, context_keys=context_keys
+        )

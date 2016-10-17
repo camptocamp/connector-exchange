@@ -72,7 +72,7 @@ class CalendarEvent(models.Model):
             no_mail = False
             if self.env['res.users'].browse(user).send_calendar_invitations:
                 no_mail = True
-            super(CalendarEvent, rec.with_context(
+            super(CalendarEvent, rec.sudo().with_context(
                 no_mail_to_attendees=no_mail)).write(values)
             if isinstance(rec.id, basestring):
                 if '-' in rec.id:

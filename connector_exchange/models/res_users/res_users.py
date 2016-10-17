@@ -104,8 +104,6 @@ class ResUsers(models.Model):
             # envoyer requete
             ews.UpdateCategoryList('Odoo', 23, WellKnownFolderName.Calendar)
 
-        return True
-
     @api.multi
     def find_folder(self, backend_id, create=True,
                     default_name='Contacts',
