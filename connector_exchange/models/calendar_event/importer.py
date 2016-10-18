@@ -309,7 +309,7 @@ class CalendarEventImporter(ExchangeImporter):
         adapter = self.backend_adapter
         ews = adapter.ews
         user = self.openerp_user
-        att_obj = self.env['ir.attachment']
+        att_obj = self.env['ir.attachment'].sudo(user.id)
 
         if isinstance(binding, int):
             binding = self.env['exchange.calendar.event'].browse(binding)
@@ -359,7 +359,7 @@ class CalendarEventImporter(ExchangeImporter):
                 #         'type': 'binary'
                 #     }
                 # )
-                binding.openerp_id.message_post(
+                binding.openerp_id.sudo(user.id).message_post(
                     attachments=[(fname, base64.b64decode(str(content)))])
 
         return True
