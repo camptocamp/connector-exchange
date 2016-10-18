@@ -42,9 +42,10 @@ class ExchangeAdapter(BackendAdapter):
         self.ews.soap = SoapClient(location, user=user, pwd=passwd, cert=cert)
 
     def set_primary_smtp_address(self, user):
+        user_sudo = user.sudo()
         subst = {
-            'u_login': user.login,
-            'exchange_suffix': user.company_id.exchange_suffix or '',
+            'u_login': user_sudo.login,
+            'exchange_suffix': user_sudo.company_id.exchange_suffix or '',
         }
         self.ews.primary_smtp_address = (
             str("%(u_login)s%(exchange_suffix)s" % subst)
