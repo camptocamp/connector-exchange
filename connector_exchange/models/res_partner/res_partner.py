@@ -19,6 +19,14 @@ class ResPartner(models.Model):
         string="Exchange Bindings",
     )
 
+    def _set_calendar_last_notif_ack(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        context.update(connector_no_export=True)
+        super(ResPartner, self)._set_calendar_last_notif_ack(
+            cr, uid, context=context)
+        return
+
     @api.multi
     def try_autobind(self, user, backend):
         """
