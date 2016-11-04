@@ -288,7 +288,7 @@ class CalendarEventImporter(ExchangeImporter):
         adapter = self.backend_adapter
         ews = adapter.ews
         user = self.openerp_user
-
+        _logger.error("**************** USER: %s %s", user.login, user.name)
         adapter.set_primary_smtp_address(user)
 
         # contact is an pyews.ews.contact.Contact instance
@@ -577,6 +577,9 @@ class CalendarEventImporter(ExchangeImporter):
         if not exchange_events:
             _logger.debug('does not exist --> CREATE')
             binding = exchange_events._create(data)
+            exchange_events.browse(binding).openerp_id.user_id = (
+                self.openerp_user.id
+            )
         else:
             _logger.debug('exists --> UPDATE')
             binding = exchange_events[0]

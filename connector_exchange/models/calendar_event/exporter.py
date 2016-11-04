@@ -144,7 +144,9 @@ class CalendarEventExporter(ExchangeExporter):
         result = False
 
         for att in calendar.required_attendees.entries:
-            if att.mailbox.email_address.value == attendee_email:
+            att_mail = att.mailbox.email_address.value
+            if (att_mail == attendee_email or
+                    att_mail == self.openerp_user.email):
                 return True
 
         return result
@@ -162,6 +164,8 @@ class CalendarEventExporter(ExchangeExporter):
             'accepted': ResponseTypeType.Accept,
         }
         for attendee in self.binding_record.attendee_ids:
+            if attendee.email == self.openerp_user.email:
+                continue
             # cn, email
             for att in calendar.required_attendees.entries:
                 if att.mailbox.email_address.value == attendee.email:
