@@ -37,7 +37,7 @@ class ResPartner(models.Model):
             bindings = partner.exchange_bind_ids.filtered(
                 lambda a: a.backend_id == backend and a.user_id == user)
             if not bindings:
-                self.env['exchange.res.partner'].sudo().create(
+                self.env['exchange.res.partner'].create(
                     {'backend_id': backend.id,
                      'user_id': user.id,
                      'openerp_id': partner.id}

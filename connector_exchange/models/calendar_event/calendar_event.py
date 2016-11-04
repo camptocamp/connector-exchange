@@ -11,6 +11,22 @@ from openerp.addons.calendar.calendar import calendar_id2real_id
 _logger = logging.getLogger(__name__)
 
 
+class CalendarAttendee(models.Model):
+    """
+    Calendar Attendee Information
+    """
+    _inherit = 'calendar.attendee'
+
+    @api.multi
+    def _send_mail_to_attendees(
+        self,
+        email_from=tools.config.get('email_from', False),
+        template_xmlid='calendar_template_meeting_invitation',
+        force=False
+    ):
+        return False
+
+
 class CalendarEvent(models.Model):
     _inherit = 'calendar.event'
 
