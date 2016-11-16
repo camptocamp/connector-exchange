@@ -463,7 +463,10 @@ class CalendarEventDisabler(ExchangeDisabler):
 
     def _run(self, external_id):
         """ Implementation of the deletion """
-        user_id = self.session.uid
-        user = self.env['res.users'].browse(user_id)
-        self.backend_adapter.set_primary_smtp_address(user)
-        self.delete_calendar_event(external_id, user)
+        # serach for correct user
+        odoo_ex_event = self.env['exchange.calendar.event'].search(
+            [('external_id', '=', external_id)])
+        if odoo_ex_event:
+            user = odoo_ex_event[0].user_id
+            self.backend_adapter.set_primary_smtp_address(user)
+            self.delete_calendar_event(external_id, user)
