@@ -136,6 +136,9 @@ class CalendarEventImporter(ExchangeImporter):
                         if attend.email == exchange_email:
                             attend.state = (
                                 STATES_MAPPING[attendee.response_type.value])
+                        # auto accept event owner
+                        if attend.partner_id == self.openerp_user.partner_id:
+                            attend.state = 'accepted'
                 continue
             else:
                 # create attendee
