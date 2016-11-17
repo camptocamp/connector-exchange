@@ -351,11 +351,8 @@ class PartnerDisabler(ExchangeDisabler):
                 _('Unable to find folder %s in Exchange' % deleted_folder.name)
                 )
 
-    def _run(self, external_id):
+    def _run(self, external_id, user_id):
         """ Implementation of the deletion """
-        odoo_ex_event = self.env['exchange.res.partner'].search(
-            [('external_id', '=', external_id)])
-        if odoo_ex_event:
-            user = odoo_ex_event[0].user_id
-            self.backend_adapter.set_primary_smtp_address(user)
-            self.move_contact(external_id, user)
+        user = self.env['res.users'].browse(user_id)
+        self.backend_adapter.set_primary_smtp_address(user)
+        self.move_contact(external_id, user)
