@@ -49,7 +49,8 @@ def delay_disable(session, model_name, binding_record_id):
     magento_id = binder.to_backend(binding_record_id)
     if magento_id:
         export_delete_record.delay(session, model_name,
-                                   record.backend_id.id, magento_id)
+                                   record.backend_id.id, magento_id,
+                                   record.user_id.id)
 
 
 @on_record_unlink(model_names=[

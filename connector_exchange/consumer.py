@@ -34,4 +34,5 @@ def delay_disable_all_bindings(session, model_name, record_id):
     for binding in record.exchange_bind_ids:
         export_delete_record.delay(session, binding._name,
                                    binding.backend_id.id,
-                                   binding.external_id)
+                                   binding.external_id,
+                                   binding.user_id.id)

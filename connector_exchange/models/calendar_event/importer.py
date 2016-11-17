@@ -190,6 +190,13 @@ class CalendarEventImporter(ExchangeImporter):
         added_partner_ids = [x[1] for x in vals['partner_ids']]
         if self.openerp_user.partner_id.id not in added_partner_ids:
             vals['partner_ids'].append((4, self.openerp_user.partner_id.id))
+            vals['attendee_ids'].append(
+                (0, 0,
+                 {'cn': self.openerp_user.partner_id.name,
+                  'email': self.openerp_user.partner_id.email,
+                  'state': 'accepted'}
+                 )
+            )
 
         return vals
 

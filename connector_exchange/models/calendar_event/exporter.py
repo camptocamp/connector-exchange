@@ -386,6 +386,7 @@ class CalendarEventExporter(ExchangeExporter):
                                           'exchange.calendar.event',
                                           self.backend_record.id,
                                           calendar_event_instance.itemid.value,
+                                          user_id,
                                           priority=30)
 
     def create_exchange_calendar_event(self, fields):
@@ -461,12 +462,9 @@ class CalendarEventDisabler(ExchangeDisabler):
         self.backend_adapter.ews.DeleteCalendarItems([external_id])
         return _("Record with ID %s deleted on Exchange") % external_id
 
-    def _run(self, external_id):
+    def _run(self, external_id, user_id):
         """ Implementation of the deletion """
-        # serach for correct user
-        odoo_ex_event = self.env['exchange.calendar.event'].search(
-            [('external_id', '=', external_id)])
-        if odoo_ex_event:
-            user = odoo_ex_event[0].user_id
-            self.backend_adapter.set_primary_smtp_address(user)
-            self.delete_calendar_event(external_id, user)
+        # search for correct user
+        user = self.env['res.users'].browse(user_id)
+        self.backend_adapter.set_primary_smtp_address(user)
+        self.delete_calendar_event(external_id, user)

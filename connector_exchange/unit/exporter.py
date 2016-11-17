@@ -176,12 +176,12 @@ class ExchangeExporter(Exporter):
 class ExchangeDisabler(Deleter):
     """ Base record disabler for Exchange """
 
-    def run(self, external_id):
+    def run(self, external_id, user_id):
         """ Run the synchronization, delete the record on Exchange
         :param external_id: identifier of the record to delete
         """
 
-        return self._run(external_id)
+        return self._run(external_id, user_id)
 
 
 @job
@@ -195,8 +195,9 @@ def export_record(session, model_name, binding_id, fields=None):
 
 
 @job
-def export_delete_record(session, model_name, backend_id, external_id):
+def export_delete_record(session, model_name, backend_id, external_id, user_id
+                         ):
     """ Delete a record on Exchange """
     env = environment.get_environment(session, model_name, backend_id)
     deleter = env.get_connector_unit(ExchangeDisabler)
-    return deleter.run(external_id)
+    return deleter.run(external_id, user_id)
