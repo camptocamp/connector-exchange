@@ -459,7 +459,12 @@ class CalendarEventDisabler(ExchangeDisabler):
         """
         delete calendar item from exchange
         """
-        self.backend_adapter.ews.DeleteCalendarItems([external_id])
+        invit = "SendToNone"
+        if user.send_calendar_invitations:
+            invit = "SendToChangedAndSaveCopy"
+        self.backend_adapter.ews.DeleteCalendarItems(
+            [external_id],
+            send_meeting_cancellations=invit)
         return _("Record with ID %s deleted on Exchange") % external_id
 
     def _run(self, external_id, user_id):
