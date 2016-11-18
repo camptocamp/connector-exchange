@@ -461,7 +461,7 @@ class CalendarEventDisabler(ExchangeDisabler):
         """
         invit = "SendToNone"
         if user.send_calendar_invitations:
-            invit = "SendToChangedAndSaveCopy"
+            invit = "SendToAllAndSaveCopy"
         self.backend_adapter.ews.DeleteCalendarItems(
             [external_id],
             send_meeting_cancellations=invit)
