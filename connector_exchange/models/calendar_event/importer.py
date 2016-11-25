@@ -518,7 +518,8 @@ class CalendarEventImporter(ExchangeImporter):
 
                 # edit Odoo event
                 vals = self.map_exchange_instance(occ_read)
-                cal_env_obj.browse(detached_event_id).write(vals)
+                cal_env_obj.browse(detached_event_id).with_context(
+                    connector_no_export=True).write(vals)
 
         # manage deleted_occurrences
         if event_instance.deleted_occurrences.entries:
@@ -530,7 +531,8 @@ class CalendarEventImporter(ExchangeImporter):
                 )
 
                 # set active = False for the previously detached event
-                cal_env_obj.browse(detached_event_id).write({'active': False})
+                cal_env_obj.browse(detached_event_id).with_context(
+                    connector_no_export=True).write({'active': False})
 
         return True
 
@@ -601,17 +603,17 @@ class CalendarEventImporter(ExchangeImporter):
 
     def _update(self, binding, data, context_keys=None):
         """ Update an Odoo record """
-        context_keys = {}
+        context_keys = self._update_context_keys(keys=context_keys)
         if self.openerp_user.send_calendar_invitations:
-            context_keys.update({"no_mail_to_attendees": True})
+            context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._update(
             binding, data, context_keys=context_keys
         )
 
     def _create(self, data, context_keys=None):
-        context_keys = {}
+        context_keys = self._create_context_keys(keys=context_keys)
         if self.openerp_user.send_calendar_invitations:
-            context_keys.update({"no_mail_to_attendees": True})
+            context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._create(
             data, context_keys=context_keys
         )
