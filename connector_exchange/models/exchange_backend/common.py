@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
 
 from pyews.ews.data import FolderClass, SensitivityType, DistinguishedFolderId
 from pyews.ews.folder import Folder
 
-from openerp import models, fields, api
-from openerp.addons.connector.session import ConnectorSession
+from odoo import models, fields, api
+from odoo.addons.connector.session import ConnectorSession
 
 from ...unit.importer import import_record
 from ...unit.environment import get_environment
