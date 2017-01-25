@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Author: Guewen Baconnier, Damien Crier
-# Copyright 2015-2016 Camptocamp SA
+# Copyright 2015-2017 Camptocamp SA
 # Author: Nicolas Clavier
 # Copyright 2014 HighCo
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 {'name': 'Connector Exchange',
- 'version': '8.0.1.0.0',
+ 'version': '10.0.1.0.0',
  'author': "Camptocamp, Nicolas Clavier, Odoo Community Association (OCA)",
  'website': "http://www.camptocamp.com",
  'summary': "Microsoft Exchange Connector",
