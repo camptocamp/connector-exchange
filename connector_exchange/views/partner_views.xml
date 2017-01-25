@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+
+    <record id="view_partner_form" model="ir.ui.view">
+      <field name="name">res.partner.form</field>
+      <field name="model">res.partner</field>
+      <field name="inherit_id" ref="connector.view_partner_connector_form" />
+      <field name="arch" type="xml">
+        <page name="connector" position="attributes">
+          <attribute name="invisible">0</attribute>
+          <attribute name="groups">connector.group_connector_manager</attribute>
+        </page>
+        <page name="connector" position="inside">
+          <group string="Exchange Bindings" name="exchange_bindings">
+            <field name="exchange_bind_ids" nolabel="1">
+                <tree>
+                    <field name="backend_id"/>
+                    <field name="user_id"/>
+                    <field name="external_id"/>
+                </tree>
+                <form>
+                    <group>
+                        <field name="backend_id"/>
+                        <field name="user_id"/>
+                        <field name="created_at"/>
+                        <field name="updated_at"/>
+                        <field name="change_key"/>
+                        <field name="external_id"/>
+                    </group>
+                </form>
+
+            </field>
+          </group>
+        </page>
+      </field>
+    </record>
+
+  </data>
+</openerp>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_user_backend_folder_form" model="ir.ui.view">
+            <field name="name">view_user_backend_folder_form</field>
+            <field name="model">res.users.backend.folder</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="folder_id"/>
+                        </group>
+                        <group>
+                            <field name="backend_id"/>
+                            <field name="user_id"/>
+                            <field name="folder_type"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_user_backend_folder_tree" model="ir.ui.view">
+            <field name="name">view_user_backend_folder_tree</field>
+            <field name="model">res.users.backend.folder</field>
+            <field name="arch" type="xml">
+                <tree string="">
+                    <field name="name"/>
+                    <field name="folder_id"/>
+                    <field name="backend_id"/>
+                    <field name="user_id"/>
+                    <field name="folder_type"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_user_backend_folder_search" model="ir.ui.view">
+            <field name="name">view_user_backend_folder_search</field>
+            <field name="model">res.users.backend.folder</field>
+            <field name="arch" type="xml">
+                <search string="">
+                    <field name="name"/>
+                    <field name="folder_id"/>
+                    <field name="backend_id"/>
+                    <field name="user_id"/>
+                    <group expand="0" string="Group By">
+                        <filter string="User" domain="[]" context="{'group_by': 'user_id'}"/>
+                        <filter string="Backend" domain="[]" context="{'group_by': 'backend_id'}"/>
+                        <filter string="Type" domain="[]" context="{'group_by': 'folder_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_user_backend_folder_view">
+            <field name="name">Exchange User Folders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.users.backend.folder</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_user_backend_folder_search"/>
+        </record>
+
+        <menuitem id="menu_user_backend_folder"
+                  parent="menu_exchange_root"
+                  sequence="20"
+                  name="Exchange User Folders"
+                  action="action_user_backend_folder_view"/>
+
+    </data>
+</openerp>

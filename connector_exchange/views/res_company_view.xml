@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="res_company_form_exchange" model="ir.ui.view">
+            <field name="name">res.company.form.exchange</field>
+            <field name="model">res.company</field>
+            <field name="priority" eval="30"/>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Exchange Configuration" name="exchange">
+                        <group>
+                            <field name="exchange_suffix"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
