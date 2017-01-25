@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 """
 
@@ -21,14 +21,14 @@ from pyews.ews.data import FolderClass
 
 from contextlib import closing, contextmanager
 
-import openerp
-from openerp import SUPERUSER_ID
-from openerp.addons.connector.session import ConnectorSession
-from openerp.addons.connector.connector import ConnectorUnit
-from openerp.addons.connector.exception import FailedJobError
-from openerp.addons.connector.queue.job import job
-from openerp.addons.connector.unit.synchronizer import Importer
-from openerp import _
+import odoo
+from odoo import SUPERUSER_ID
+from odoo.addons.connector.session import ConnectorSession
+from odoo.addons.connector.connector import ConnectorUnit
+from odoo.addons.connector.exception import FailedJobError
+from odoo.addons.connector.queue.job import job
+from odoo.addons.connector.unit.synchronizer import Importer
+from odoo import _
 
 from ..backend import exchange_2010
 from ..connector import add_checkpoint
@@ -82,11 +82,11 @@ class ExchangeImporter(Importer):
         :param subrecord: subrecord to import
         :param binding_model: name of the binding model for the relation
         :type binding_model: str | unicode
-        :param importer_cls: :class:`openerp.addons.connector.\
+        :param importer_cls: :class:`odoo.addons.connector.\
                                      connector.ConnectorUnit`
                              class or parent class to use for the export.
                              By default: ExchangeImporter
-        :type importer_cls: :class:`openerp.addons.connector.\
+        :type importer_cls: :class:`odoo.addons.connector.\
                                     connector.MetaConnectorUnit`
         :param always: if True, the record is updated even if it already
                        exists, note that it is still skipped if it has
@@ -222,13 +222,13 @@ class ExchangeImporter(Importer):
         This can be used to make a preemptive check in a new transaction,
         for instance to see if another transaction already made the work.
         """
-        with openerp.api.Environment.manage():
-            registry = openerp.modules.registry.RegistryManager.get(
+        with odoo.api.Environment.manage():
+            registry = odoo.modules.registry.RegistryManager.get(
                 self.env.cr.dbname
             )
             with closing(registry.cursor()) as cr:
                 try:
-                    new_env = openerp.api.Environment(cr, self.env.uid,
+                    new_env = odoo.api.Environment(cr, self.env.uid,
                                                       self.env.context)
                     new_connector_session = ConnectorSession.from_env(new_env)
                     connector_env = self.connector_env.create_environment(

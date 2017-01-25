@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
 import datetime
@@ -14,8 +14,8 @@ from pyews.ews.data import (SensitivityType,
                             ResponseTypeType,
                             )
 
-from openerp import _, fields
-from openerp.tools import (DEFAULT_SERVER_DATE_FORMAT,
+from odoo import _, fields
+from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
                            DEFAULT_SERVER_DATETIME_FORMAT)
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)

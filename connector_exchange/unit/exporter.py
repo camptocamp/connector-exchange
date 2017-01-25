@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
+# Copyright 2016-2017 Camptocamp SA
 # Author: Nicolas Clavier
 # Copyright 2014 HighCo
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 """
 
@@ -18,11 +18,11 @@ import logging
 
 import psycopg2
 
-from openerp import _
-from openerp.addons.connector.exception import RetryableJobError
-from openerp.addons.connector.unit.synchronizer import Deleter
-from openerp.addons.connector.unit.synchronizer import Exporter
-from openerp.addons.connector.queue.job import job
+from odoo import _
+from odoo.addons.connector.exception import RetryableJobError
+from odoo.addons.connector.unit.synchronizer import Deleter
+from odoo.addons.connector.unit.synchronizer import Exporter
+from odoo.addons.connector.queue.job import job
 from . import environment
 
 _logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ class ExchangeExporter(Exporter):
 
     def _map_data(self):
         """ Returns an instance of
-        :py:class:`~openerp.addons.connector.unit.mapper.MapRecord`
+        :py:class:`~odoo.addons.connector.unit.mapper.MapRecord`
         """
         return self.mapper.map_record(self.binding_record)
 
