@@ -1,29 +1,13 @@
 # -*- coding: utf-8 -*-
-#
-#
-#    Authors: Guewen Baconnier, Damien Crier
-#    Copyright 2015-2016 Camptocamp SA
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
+# Authors: Guewen Baconnier, Damien Crier
+# Copyright 2015-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 import mock
 
-from openerp.addons.connector_exchange.unit.importer import (
+from odoo.addons.connector_exchange.unit.importer import (
     import_record,
 )
-from openerp.addons.connector_exchange.unit.exporter import (
+from odoo.addons.connector_exchange.unit.exporter import (
     export_record,
     export_delete_record,
 )
@@ -37,7 +21,7 @@ from .common import (
 class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
 
     def test_batch_export_partner_contact(self):
-        import_job_path = ('openerp.addons.connector_exchange.consumer.'
+        import_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_record')
         cassette_name = 'test_batch_export_partner_batch'
 
@@ -55,7 +39,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
 
     def setUp(self):
         super(TestExchangeBackendSyncImport, self).setUp()
-        import_job_path = ('openerp.addons.connector_exchange.consumer.'
+        import_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_record')
         cassette_name = 'test_export_contact'
 
@@ -79,7 +63,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
         )
 
     def test_batch_import_partner_batch(self):
-        import_job_path = ('openerp.addons.connector_exchange.models.'
+        import_job_path = ('odoo.addons.connector_exchange.models.'
                            'exchange_backend.common.import_record')
         cassette_name = 'test_batch_import_partner_batch'
 
@@ -106,7 +90,7 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             )
 
     def test_export_contact(self):
-        import_job_path = ('openerp.addons.connector_exchange.consumer.'
+        import_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_record')
         cassette_name = 'test_export_contact'
 
@@ -177,9 +161,9 @@ class TestExchangeBackendSyncContactRecordImport(
             )
 
     def test_import_contact(self):
-        export_job_path = ('openerp.addons.connector_exchange.consumer.'
+        export_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_record')
-        import_job_path = ('openerp.addons.connector_exchange.models.'
+        import_job_path = ('odoo.addons.connector_exchange.models.'
                            'res_partner.exporter.import_record')
         cassette_name = 'test_import_contact'
 
@@ -217,9 +201,9 @@ class TestExchangeBackendSyncContactRecordDelete(
             )
 
     def test_delete_contact(self):
-        import_job_path = ('openerp.addons.connector_exchange.consumer.'
+        import_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_record')
-        export_job_path = ('openerp.addons.connector_exchange.consumer.'
+        export_job_path = ('odoo.addons.connector_exchange.consumer.'
                            'export_delete_record')
         cassette_name = 'test_delete_contact'
 
