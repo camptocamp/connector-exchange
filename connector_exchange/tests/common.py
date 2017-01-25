@@ -1,23 +1,7 @@
 # -*- coding: utf-8 -*-
-#
-#
-#    Authors: Guewen Baconnier, Damien Crier
-#    Copyright 2015-2016 Camptocamp SA
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
+# Authors: Guewen Baconnier, Damien Crier
+# Copyright 2015-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 
 from os.path import dirname, join, exists
@@ -25,10 +9,10 @@ from os.path import dirname, join, exists
 from lxml import etree
 from vcr import VCR
 
-from openerp import SUPERUSER_ID
-from openerp.tests.common import TransactionCase
-from openerp.addons.connector.session import ConnectorSession
-from openerp.addons.connector_exchange.connector import get_environment
+from odoo import SUPERUSER_ID
+from odoo.tests.common import TransactionCase
+from odoo.addons.connector.session import ConnectorSession
+from odoo.addons.connector_exchange.connector import get_environment
 
 
 # This is the true URL. Please be sure to record the calls made to it

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
 
-from openerp import models, fields, api, _
-from openerp import tools
-from openerp.addons.calendar.calendar import calendar_id2real_id
+from odoo import models, fields, api, _
+from odoo import tools
+from odoo.addons.calendar.calendar import calendar_id2real_id
 _logger = logging.getLogger(__name__)
 
 
