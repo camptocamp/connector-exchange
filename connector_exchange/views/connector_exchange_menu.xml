@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
-  <data>
+<odoo>
 
     <menuitem id="menu_exchange_root"
         parent="connector.menu_connector_root"
@@ -8,5 +7,4 @@
         sequence="30"
         groups="connector.group_connector_manager"/>
 
-  </data>
-</openerp>
+</odoo>
