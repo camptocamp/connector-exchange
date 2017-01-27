@@ -9,7 +9,7 @@
             <field name="inherit_id" ref="base.view_company_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//notebook" position="inside">
-                    <page string="Exchange Configuration" name="exchange">
+                    <page string="Exchange Configuration" name="exchange" groups="connector.group_connector_manager">
                         <group>
                             <field name="exchange_suffix"/>
                         </group>

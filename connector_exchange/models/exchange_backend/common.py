@@ -5,7 +5,8 @@
 
 import logging
 
-from pyews.ews.data import FolderClass, SensitivityType
+from pyews.ews.data import FolderClass, SensitivityType, DistinguishedFolderId
+from pyews.ews.folder import Folder
 
 from openerp import models, fields, api
 from openerp.addons.connector.session import ConnectorSession
@@ -78,6 +79,7 @@ class ExchangeBackend(models.Model):
         users = self.env['res.users'].search([('exchange_synch', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # this will trigger an export for these contacts
                 user.exchange_contact_ids.try_autobind(user, backend)
         return True
@@ -90,6 +92,7 @@ class ExchangeBackend(models.Model):
         users = self.env['res.users'].search([('exchange_synch', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # find folder for this user. If not exists do not try to import
                 folder = user.find_folder(backend.id, create=False)
                 if not folder:
@@ -123,12 +126,20 @@ class ExchangeBackend(models.Model):
                                                           ids_only=True)
                 # for each contact found, run import_record
                 for exchange_contact in exchange_contacts:
-                    import_record.delay(session,
-                                        'exchange.res.partner',
-                                        backend.id,
-                                        user.id,
-                                        exchange_contact.itemid.value,
-                                        priority=30)
+                    odoo_categ = False
+                    for categ in exchange_contact.categories.entries:
+                        if categ.value == 'Odoo':
+                            odoo_categ = True
+                            break
+                    if odoo_categ:
+                        import_record.delay(
+                            session,
+                            'exchange.res.partner',
+                            backend.id,
+                            user.id,
+                            exchange_contact.itemid.value,
+                            sync_session_id=sync_session.id,
+                            priority=30)
         return True
 
     @api.model
@@ -148,8 +159,10 @@ class ExchangeBackend(models.Model):
         session = ConnectorSession.from_env(self.env)
         users = self.env['res.users'].search(
             [('exchange_calendar_sync', '=', True)])
+
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 imported_events = []
                 existing_events = user.exchange_calendar_ids.mapped(
                     'exchange_bind_ids')
@@ -160,7 +173,7 @@ class ExchangeBackend(models.Model):
 
                 # find folder for this user. If not exists, create one
                 folder = user.find_folder(backend.id, create=True,
-                                          default_name='Odoo',
+                                          default_name="Calendar",
                                           folder_type='calendar')
                 if not folder:
                     continue
@@ -180,23 +193,28 @@ class ExchangeBackend(models.Model):
                     )
                 adapter.ews.get_root_folder()
                 exchange_folder = (
-                    adapter.ews.root_folder.FindFolderByDisplayName(
-                        str(folder.name),
-                        types=[FolderClass.Calendars],
-                        recursive=True))
-                if exchange_folder:
-                    exchange_folder = exchange_folder[0]
-                else:
+                    Folder.bind(
+                        adapter.ews,
+                        DistinguishedFolderId.calendar)
+                )
+                if not exchange_folder:
                     continue
 
                 exchange_events = adapter.ews.FindCalendarItems(
                     exchange_folder,
-                    ids_only=True)
+                    ids_only=False)
                 # for each event found, run import_record if sensitivity
-                # is not "Private"
+                # is not "Private" or "Personnal"
+                # and if categories contains Odoo
                 for exchange_event in exchange_events:
                     sensitivity = exchange_event.sensitivity
-                    if (sensitivity.value != SensitivityType.Private and
+                    odoo_categ = False
+                    for categ in exchange_event.categories.entries:
+                        if categ.value == 'Odoo':
+                            odoo_categ = True
+                            break
+                    if (odoo_categ and
+                            sensitivity.value != SensitivityType.Private and
                             sensitivity.value != SensitivityType.Personal):
                         import_record.delay(session,
                                             'exchange.calendar.event',
@@ -213,7 +231,8 @@ class ExchangeBackend(models.Model):
                      ('user_id', '=', user.id)]
                 )
                 calendar_event_ids = to_delete_ids.mapped('openerp_id')
-                calendar_event_ids.unlink()
+                calendar_event_ids.with_context(
+                    connector_no_export=True).unlink()
         return True
 
     @api.multi
@@ -224,6 +243,7 @@ class ExchangeBackend(models.Model):
             [('exchange_calendar_sync', '=', True)])
         for backend in self:
             for user in users:
+                user.create_odoo_category()
                 # this will trigger an export for these contacts
                 user.exchange_calendar_ids.try_autobind(user, backend)
         return True

@@ -186,6 +186,8 @@ class PartnerExporter(ExchangeExporter):
         contact = exchange_service.GetContacts(
             [self.binding_record.external_id])[0]
         self.fill_contact(contact, fields)
+        # add Odoo category on create contact on exchange
+        contact.categories.add('Odoo')
 
         return contact
 
@@ -349,10 +351,8 @@ class PartnerDisabler(ExchangeDisabler):
                 _('Unable to find folder %s in Exchange' % deleted_folder.name)
                 )
 
-    def _run(self, external_id):
+    def _run(self, external_id, user_id):
         """ Implementation of the deletion """
-        user_id = self.session.uid
         user = self.env['res.users'].browse(user_id)
         self.backend_adapter.set_primary_smtp_address(user)
-
         self.move_contact(external_id, user)

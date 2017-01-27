@@ -3,7 +3,8 @@
 # Copyright 2016 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-from pyews.ews.data import FolderClass
+from pyews.ews.data import FolderClass, DistinguishedFolderId
+from pyews.ews.folder import Folder
 from ...unit.backend_adapter import ExchangeAdapter
 from ...backend import exchange_2010
 
@@ -28,11 +29,9 @@ class EventBackendAdapter(ExchangeAdapter):
 
     def find_folder(self, odoo_folder):
         self.ews.get_root_folder()
-        exchange_folder = self.ews.root_folder.FindFolderByDisplayName(
-            str(odoo_folder.name),
-            types=[FolderClass.Calendars],
-            recursive=True)
-        return exchange_folder[0]
+        exchange_folder = Folder.bind_df(self.ews,
+                                         DistinguishedFolderId.calendar)
+        return exchange_folder
 
     def create_folder(self, odoo_folder):
         self.ews.get_root_folder()

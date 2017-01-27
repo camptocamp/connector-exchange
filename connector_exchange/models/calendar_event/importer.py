@@ -3,6 +3,7 @@
 # Copyright 2016 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
+import base64
 import logging
 import pytz
 import datetime
@@ -135,6 +136,9 @@ class CalendarEventImporter(ExchangeImporter):
                         if attend.email == exchange_email:
                             attend.state = (
                                 STATES_MAPPING[attendee.response_type.value])
+                        # auto accept event owner
+                        if attend.partner_id == self.openerp_user.partner_id:
+                            attend.state = 'accepted'
                 continue
             else:
                 # create attendee
@@ -181,6 +185,19 @@ class CalendarEventImporter(ExchangeImporter):
                          }
                     )
                     vals['partner_ids'].append((4, new_partner.openerp_id.id))
+
+        # add owner of the event as attendee
+        added_partner_ids = [x[1] for x in vals['partner_ids']]
+        if self.openerp_user.partner_id.id not in added_partner_ids:
+            vals['partner_ids'].append((4, self.openerp_user.partner_id.id))
+            vals['attendee_ids'].append(
+                (0, 0,
+                 {'cn': self.openerp_user.partner_id.name,
+                  'email': self.openerp_user.partner_id.email,
+                  'state': 'accepted'}
+                 )
+            )
+
         return vals
 
     def fill_recurrency(self, event_instance):
@@ -281,7 +298,7 @@ class CalendarEventImporter(ExchangeImporter):
         adapter = self.backend_adapter
         ews = adapter.ews
         user = self.openerp_user
-
+        _logger.error("**************** USER: %s %s", user.login, user.name)
         adapter.set_primary_smtp_address(user)
 
         # contact is an pyews.ews.contact.Contact instance
@@ -302,7 +319,7 @@ class CalendarEventImporter(ExchangeImporter):
         adapter = self.backend_adapter
         ews = adapter.ews
         user = self.openerp_user
-        att_obj = self.env['ir.attachment']
+        att_obj = self.env['ir.attachment'].sudo(user.id)
 
         if isinstance(binding, int):
             binding = self.env['exchange.calendar.event'].browse(binding)
@@ -326,7 +343,7 @@ class CalendarEventImporter(ExchangeImporter):
             fname = attachment.name.value
             content = attachment.content.value
 
-            odoo_att = attach_by_name[fname]
+            odoo_att = attach_by_name.get(fname)
             # for att in odoo_att:
             #     if att.name == fname:
             #         odoo_att += att
@@ -342,17 +359,18 @@ class CalendarEventImporter(ExchangeImporter):
             else:
                 # create a new one for the binding
                 # file_name = re.sub(r'[^a-zA-Z0-9_-]', '_', fname)
-
-                att_obj.create(
-                    {
-                        'name': fname,
-                        'datas': content,
-                        'datas_fname': fname,
-                        'res_model': 'calendar.event',
-                        'res_id': binding.openerp_id.id,
-                        'type': 'binary'
-                    }
-                )
+                # att = att_obj.create(
+                #     {
+                #         'name': fname,
+                #         'datas': content,
+                #         'datas_fname': fname,
+                #         'res_model': 'calendar.event',
+                #         'res_id': binding.openerp_id.id,
+                #         'type': 'binary'
+                #     }
+                # )
+                binding.openerp_id.sudo(user.id).message_post(
+                    attachments=[(fname, base64.b64decode(str(content)))])
 
         return True
 
@@ -500,7 +518,8 @@ class CalendarEventImporter(ExchangeImporter):
 
                 # edit Odoo event
                 vals = self.map_exchange_instance(occ_read)
-                cal_env_obj.browse(detached_event_id).write(vals)
+                cal_env_obj.browse(detached_event_id).with_context(
+                    connector_no_export=True).write(vals)
 
         # manage deleted_occurrences
         if event_instance.deleted_occurrences.entries:
@@ -512,7 +531,8 @@ class CalendarEventImporter(ExchangeImporter):
                 )
 
                 # set active = False for the previously detached event
-                cal_env_obj.browse(detached_event_id).write({'active': False})
+                cal_env_obj.browse(detached_event_id).with_context(
+                    connector_no_export=True).write({'active': False})
 
         return True
 
@@ -569,6 +589,9 @@ class CalendarEventImporter(ExchangeImporter):
         if not exchange_events:
             _logger.debug('does not exist --> CREATE')
             binding = exchange_events._create(data)
+            exchange_events.browse(binding).openerp_id.user_id = (
+                self.openerp_user.id
+            )
         else:
             _logger.debug('exists --> UPDATE')
             binding = exchange_events[0]
@@ -577,3 +600,20 @@ class CalendarEventImporter(ExchangeImporter):
         self.bind_attachments(binding, event_id)
 
         self.manage_modified_deleted_occurrences(binding, event_id)
+
+    def _update(self, binding, data, context_keys=None):
+        """ Update an Odoo record """
+        context_keys = self._update_context_keys(keys=context_keys)
+        if self.openerp_user.send_calendar_invitations:
+            context_keys.update(no_mail_to_attendees=True)
+        return super(CalendarEventImporter, self)._update(
+            binding, data, context_keys=context_keys
+        )
+
+    def _create(self, data, context_keys=None):
+        context_keys = self._create_context_keys(keys=context_keys)
+        if self.openerp_user.send_calendar_invitations:
+            context_keys.update(no_mail_to_attendees=True)
+        return super(CalendarEventImporter, self)._create(
+            data, context_keys=context_keys
+        )
