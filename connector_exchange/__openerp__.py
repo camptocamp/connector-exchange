@@ -34,6 +34,6 @@
           'data/generic_partner.xml',
           'data/changeset_field_rule.xml',
           ],
- 'installable': True,
+ 'installable': False,
  'auto_install': False,
  }
