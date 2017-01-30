@@ -18,12 +18,10 @@ import logging
 
 import psycopg2
 
-from odoo import _
+from odoo import _, tools
 from odoo.addons.connector.exception import RetryableJobError
-from odoo.addons.connector.unit.synchronizer import Deleter
-from odoo.addons.connector.unit.synchronizer import Exporter
+from odoo.addons.connector.unit.synchronizer import Deleter, Exporter
 from odoo.addons.connector.queue.job import job
-from . import environment
 
 _logger = logging.getLogger(__name__)
 
@@ -42,20 +40,17 @@ class ExchangeExporter(Exporter):
         self.binding_id = None
         self.binding_record = None
 
-    def get_openerp_data(self, binding_id):
-        """
-
-        """
+    def _get_binding(self, binding_id):
+        """ Rutern the raw Odoo data for ``self.binding_id`` """
         return self.model.browse(self.binding_id)
 
-    def run(self, binding_id, *args, **kwargs):
+    def run(self, binding, *args, **kwargs):
         """ The connectors have to implement the _run method """
-        self.binding_id = binding_id
-        self.binding_record = self.get_openerp_data(binding_id)
-
         # prevent other jobs to export the same record
         # will be released on commit (or rollback)
         self._lock()
+
+        self.binding = binding
 
         result = self._run(*args, **kwargs)
 
@@ -63,7 +58,8 @@ class ExchangeExporter(Exporter):
         # exports (due to dependencies) and one of them fails.
         # The commit will also release the lock acquired on the binding
         # record
-        self.session.commit()
+        if not tools.config['test_enable']:
+            self.env.cr.commit()
 
         self._after_export()
         return result
@@ -87,9 +83,12 @@ class ExchangeExporter(Exporter):
         sql = ("SELECT id FROM %s WHERE ID = %%s FOR UPDATE NOWAIT" %
                self.model._table)
         try:
-            self.session.cr.execute(sql, (self.binding_id, ),
-                                    log_exceptions=False)
+            self.env.cr.execute(sql, (self.binding_id, ),
+                                log_exceptions=False)
         except psycopg2.OperationalError:
+            _logger.info('A concurrent job is already exporting the same '
+                         'record (%s with id %s). Job delayed later.',
+                         self.model._name, self.binding_id)
             raise RetryableJobError(
                 'A concurrent job is already exporting the same record '
                 '(%s with id %s). The job will be retried later.' %
@@ -185,19 +184,19 @@ class ExchangeDisabler(Deleter):
 
 
 @job
-def export_record(session, model_name, binding_id, fields=None):
+def export_record(env, model_name, binding_id, fields=None):
     """ Export a record from Exchange """
-    record = session.env[model_name].browse(binding_id)
-    env = environment.get_environment(session, model_name,
-                                      record.backend_id.id)
-    exporter = env.get_connector_unit(ExchangeExporter)
+    record = env[model_name].browse(binding_id)
+    co_env = record.backend_id.get_environment(model_name)
+    exporter = co_env.get_connector_unit(ExchangeExporter)
     return exporter.run(binding_id, fields=fields)
 
 
 @job
-def export_delete_record(session, model_name, backend_id, external_id, user_id
-                         ):
+def export_delete_record(env, model_name, backend_id, external_id, user_id):
     """ Delete a record on Exchange """
-    env = environment.get_environment(session, model_name, backend_id)
-    deleter = env.get_connector_unit(ExchangeDisabler)
+    backend = env['exchange.backend'].browse(backend_id)
+    backend.env = env
+    co_env = backend.get_environment(model_name)
+    deleter = co_env.get_connector_unit(ExchangeDisabler)
     return deleter.run(external_id, user_id)

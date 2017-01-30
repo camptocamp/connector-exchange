@@ -239,7 +239,7 @@ class PartnerExporter(ExchangeExporter):
         """
             run a delayed job for the exchange record
         """
-        return import_record.delay(self.session,
+        return import_record.delay(self.env,
                                    'exchange.res.partner',
                                    self.backend_record.id,
                                    user_id,
