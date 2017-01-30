@@ -3,20 +3,23 @@
 # Copyright 2016-2017 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+
 import logging
+from contextlib import contextmanager
 
 from pyews.ews.data import FolderClass, SensitivityType, DistinguishedFolderId
 from pyews.ews.folder import Folder
 
 from odoo import models, fields, api
-from odoo.addons.connector.session import ConnectorSession
+
+from odoo.addons.connector.connector import ConnectorEnvironment
 
 from ...unit.importer import import_record
-from ...unit.environment import get_environment
 from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
 
 _logger = logging.getLogger(__name__)
+
 
 
 class ExchangeBackend(models.Model):
@@ -88,7 +91,6 @@ class ExchangeBackend(models.Model):
     def import_contact_partners(self):
         """ Import partners from exchange backend """
         _logger.debug('import contact partners')
-        session = ConnectorSession.from_env(self.env)
         users = self.env['res.users'].search([('exchange_synch', '=', True)])
         for backend in self:
             for user in users:
@@ -99,10 +101,10 @@ class ExchangeBackend(models.Model):
                     continue
 
                 # get all contacts for this user
-                env = get_environment(session,
-                                      'exchange.res.partner',
-                                      backend.id)
-                adapter = env.get_connector_unit(PartnerBackendAdapter)
+                model_name = 'exchange.res.partner'
+                with backend.get_environment(model_name) as connector_env:
+                    adapter = connector_env.get_connector_unit(
+                        PartnerBackendAdapter)
                 subst = {
                     'u_login': user.login,
                     'exchange_suffix': user.company_id.exchange_suffix or '',
@@ -133,7 +135,7 @@ class ExchangeBackend(models.Model):
                             break
                     if odoo_categ:
                         import_record.delay(
-                            session,
+                            self.env,
                             'exchange.res.partner',
                             backend.id,
                             user.id,
@@ -155,7 +157,6 @@ class ExchangeBackend(models.Model):
     def import_user_calendar(self):
         """ Import events from exchange backend """
         _logger.debug('import events')
-        session = ConnectorSession.from_env(self.env)
         users = self.env['res.users'].search(
             [('exchange_calendar_sync', '=', True)])
 
@@ -178,10 +179,10 @@ class ExchangeBackend(models.Model):
                     continue
 
                 # get all contacts for this user
-                env = get_environment(session,
-                                      'exchange.calendar.event',
-                                      backend.id)
-                adapter = env.get_connector_unit(EventBackendAdapter)
+                model_name = 'exchange.calendar.event'
+                with backend.get_environment(model_name) as connector_env:
+                    adapter = connector_env.get_connector_unit(
+                        EventBackendAdapter)
                 subst = {
                     'u_login': user.login,
                     'exchange_suffix': user.company_id.exchange_suffix or '',
@@ -215,7 +216,7 @@ class ExchangeBackend(models.Model):
                     if (odoo_categ and
                             sensitivity.value != SensitivityType.Private and
                             sensitivity.value != SensitivityType.Personal):
-                        import_record.delay(session,
+                        import_record.delay(self.env,
                                             'exchange.calendar.event',
                                             backend.id,
                                             user.id,
@@ -246,3 +247,10 @@ class ExchangeBackend(models.Model):
                 # this will trigger an export for these contacts
                 user.exchange_calendar_ids.try_autobind(user, backend)
         return True
+
+    @contextmanager
+    @api.multi
+    def get_environment(self, model_name):
+        """ Create an environment to work with.  """
+        self.ensure_one()
+        yield ConnectorEnvironment(self, model_name)

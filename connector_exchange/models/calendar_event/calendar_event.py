@@ -80,7 +80,6 @@ class CalendarEvent(models.Model):
     def write(self, values):
         """Overload write method to trigger connector events"""
         # FIXME: manage alteration of recurrent events
-        # session = ConnectorSession.from_env(self.env)
         for rec in self:
             user = values.get('user_id')
             if not user:
@@ -104,8 +103,6 @@ class CalendarEvent(models.Model):
                         self.browse(real_id).with_context(
                             connector_no_export=True,
                             no_mail_to_attendees=no_mail).unlink()
-                        # delay_disable_all_bindings(session, self._name,
-                        # real_id)
 
             else:
                 # we are dealing with a real event

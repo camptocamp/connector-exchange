@@ -6,9 +6,9 @@
 from odoo import models, fields, api
 
 
-def add_checkpoint(session, model_name, record_id,
+def add_checkpoint(env, model_name, record_id,
                    backend_model_name, backend_id):
-    checkpoint_model = session.env['connector.checkpoint']
+    checkpoint_model = env['connector.checkpoint']
     return checkpoint_model.create_from_name(model_name, record_id,
                                              backend_model_name, backend_id)
 

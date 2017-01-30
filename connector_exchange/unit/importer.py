@@ -23,7 +23,6 @@ from contextlib import closing, contextmanager
 
 import odoo
 from odoo import SUPERUSER_ID
-from odoo.addons.connector.session import ConnectorSession
 from odoo.addons.connector.connector import ConnectorUnit
 from odoo.addons.connector.exception import FailedJobError
 from odoo.addons.connector.queue.job import job
@@ -32,7 +31,6 @@ from odoo import _
 
 from ..backend import exchange_2010
 from ..connector import add_checkpoint
-from . import environment
 
 _logger = logging.getLogger(__name__)
 
@@ -45,7 +43,7 @@ RETRY_WHEN_CONCURRENT_DETECTED = 1  # seconds
 
 
 class ExchangeImporter(Importer):
-    """ Importer which set the sync_session_id in the context """
+    """ Exchange Importer """
 
     # Name of the field which contains the ID
     _id_field = None  # set in sub-classes
@@ -230,10 +228,9 @@ class ExchangeImporter(Importer):
                 try:
                     new_env = odoo.api.Environment(cr, self.env.uid,
                                                       self.env.context)
-                    new_connector_session = ConnectorSession.from_env(new_env)
                     connector_env = self.connector_env.create_environment(
                         self.backend_record.with_env(new_env),
-                        new_connector_session,
+                        self.env,
                         model_name or self.model._name,
                         connector_env=self.connector_env
                     )
@@ -349,15 +346,16 @@ class AddCheckpoint(ConnectorUnit):
     def run(self, openerp_binding_id):
         binding = self.model.browse(openerp_binding_id)
         record = binding.openerp_id
-        add_checkpoint(self.session,
+        add_checkpoint(self.env,
                        record._model._name,
                        record.id,
                        self.backend_record.id)
 
 
 @job
-def import_record(session, model_name, backend_id, user_id, item_id):
+def import_record(env, model_name, backend_id, user_id, item_id):
     """ Import a record from Exchange """
-    env = environment.get_environment(session, model_name, backend_id)
-    importer = env.get_connector_unit(ExchangeImporter)
-    importer.run(item_id, user_id)
+    backend = env['exchange.backend'].browse(backend_id)
+    with backend.get_environment(model_name) as connector_env:
+        importer = connector_env.get_connector_unit(ExchangeImporter)
+        importer.run(item_id, user_id)
