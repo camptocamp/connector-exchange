@@ -79,7 +79,6 @@ class ExchangeBackendTransactionCase(TransactionCase):
             'version': 'exchange_2010'
         })
         self.connector_session = ConnectorSession.from_env(self.env)
-        self.sync_session = self.env['connector.sync.session'].create({})
 
         self.user = self.env['res.users'].browse(SUPERUSER_ID)
         self.user.exchange_synch = True
@@ -101,4 +100,4 @@ class ExchangeBackendTransactionCase(TransactionCase):
 
     def _get_environment(self, model_name):
         return get_environment(self.connector_session, model_name,
-                               self.lefac_backend.id, self.sync_session.id)
+                               self.lefac_backend.id)
