@@ -9,7 +9,6 @@ from odoo.addons.connector.event import (on_record_write,
                                             )
 from odoo.addons.connector.connector import Binder
 from ... import consumer
-from ...unit.environment import get_environment
 from ...unit.exporter import export_delete_record
 
 
@@ -21,34 +20,35 @@ from ...unit.exporter import export_delete_record
     'exchange.res.partner',
     'exchange.calendar.event',
     ])
-def delay_export(session, model_name, record_id, vals):
-    consumer.delay_export(session, model_name, record_id, vals)
+def delay_export(env, model_name, record_id, vals):
+    consumer.delay_export(env, model_name, record_id, vals)
 
 
 @on_record_write(model_names=[
     'res.partner',
     'calendar.event',
     ])
-def delay_export_all_bindings(session, model_name, record_id, vals):
+def delay_export_all_bindings(env, model_name, record_id, vals):
     if vals.keys() == ['exchange_bind_ids']:
         # a user just added a binding on an existing partner, we don't need to
         # create an export job because it will be created by the creation
         # of the binding
         return
-    consumer.delay_export_all_bindings(session, model_name, record_id, vals)
+    consumer.delay_export_all_bindings(env, model_name, record_id, vals)
 
 
 @on_record_unlink(model_names=[
     'exchange.res.partner',
     'exchange.calendar.event',
     ])
-def delay_disable(session, model_name, binding_record_id):
-    record = session.env[model_name].browse(binding_record_id)
-    env = get_environment(session, model_name, record.backend_id.id)
-    binder = env.get_connector_unit(Binder)
+def delay_disable(env, model_name, binding_record_id):
+    record = env[model_name].browse(binding_record_id)
+    record.env = env
+    with record.backend_id.get_environment(model_name) as connector_env:
+        binder = connector_env.get_connector_unit(Binder)
     magento_id = binder.to_backend(binding_record_id)
     if magento_id:
-        export_delete_record.delay(session, model_name,
+        export_delete_record.delay(env, model_name,
                                    record.backend_id.id, magento_id,
                                    record.user_id.id)
 
@@ -57,6 +57,6 @@ def delay_disable(session, model_name, binding_record_id):
     'res.partner',
     'calendar.event',
     ])
-def delay_disable_all_bindings(session, model_name, record_id):
-    consumer.delay_disable_all_bindings(session, model_name,
+def delay_disable_all_bindings(env, model_name, record_id):
+    consumer.delay_disable_all_bindings(env, model_name,
                                         record_id)

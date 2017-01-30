@@ -11,8 +11,6 @@ from vcr import VCR
 
 from odoo import SUPERUSER_ID
 from odoo.tests.common import TransactionCase
-from odoo.addons.connector.session import ConnectorSession
-from odoo.addons.connector_exchange.connector import get_environment
 
 
 # This is the true URL. Please be sure to record the calls made to it
@@ -78,7 +76,6 @@ class ExchangeBackendTransactionCase(TransactionCase):
             'name': 'TEST',
             'version': 'exchange_2010'
         })
-        self.connector_session = ConnectorSession.from_env(self.env)
 
         self.user = self.env['res.users'].browse(SUPERUSER_ID)
         self.user.exchange_synch = True
@@ -99,5 +96,5 @@ class ExchangeBackendTransactionCase(TransactionCase):
             )
 
     def _get_environment(self, model_name):
-        return get_environment(self.connector_session, model_name,
+        return get_environment(self.env, model_name,
                                self.lefac_backend.id)

@@ -47,7 +47,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
             self.create_exchange_binding()
-            export_record(self.connector_session,
+            export_record(self.env,
                           'exchange.res.partner',
                           self.binding.id)
             self.assertTrue(self.binding.external_id)
@@ -98,33 +98,33 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
             self.create_exchange_binding()
-            export_record(self.connector_session,
+            export_record(self.env,
                           'exchange.res.partner',
                           self.binding.id)
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
             # self.binding.zip = False
-            # export_record(self.connector_session,
+            # export_record(self.env,
             #               'exchange.res.partner',
             #               self.binding.id,
             #               fields=['zip'])
 
             # self.binding.phone = False
-            # export_record(self.connector_session,
+            # export_record(self.env,
             #               'exchange.res.partner',
             #               self.binding.id,
             #               fields=['phone'])
 
             # self.binding.email = "aaa@bbb.ccc"
             # # self.binding.email = False
-            # export_record(self.connector_session,
+            # export_record(self.env,
             #               'exchange.res.partner',
             #               self.binding.id,
             #               fields=['email'])
 
             # self.binding.zip = '1337'
-            # export_record(self.connector_session,
+            # export_record(self.env,
             #               'exchange.res.partner',
             #               self.binding.id,
             #               fields=['zip'])
@@ -137,7 +137,7 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             # apply all 'applicable' changeset rules
             # (see demo file  'in partner_changeset' module)
             self.binding.changeset_ids.mapped('change_ids').apply()
-            export_record(self.connector_session,
+            export_record(self.env,
                           'exchange.res.partner',
                           self.binding.id,
                           fields=['zip', 'city', 'email', 'phone', 'lastname'])
@@ -172,13 +172,13 @@ class TestExchangeBackendSyncContactRecordImport(
                 mock.patch(import_job_path), \
                 mock.patch(export_job_path):
             self.create_exchange_binding()
-            export_record(self.connector_session,
+            export_record(self.env,
                           'exchange.res.partner',
                           self.binding.id)
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
-            import_record(self.connector_session,
+            import_record(self.env,
                           'exchange.res.partner',
                           self.exchange_backend.id,
                           self.created_user.user_id.id,
@@ -212,13 +212,13 @@ class TestExchangeBackendSyncContactRecordDelete(
                 mock.patch(import_job_path), \
                 mock.patch(export_job_path):
             self.create_exchange_binding()
-            export_record(self.connector_session,
+            export_record(self.env,
                           'exchange.res.partner',
                           self.binding.id)
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
-            export_delete_record(self.connector_session,
+            export_delete_record(self.env,
                                  'exchange.res.partner',
                                  self.exchange_backend.id,
                                  self.binding.external_id

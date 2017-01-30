@@ -18,12 +18,10 @@ import logging
 
 import psycopg2
 
-from odoo import _
+from odoo import _, tools
 from odoo.addons.connector.exception import RetryableJobError
-from odoo.addons.connector.unit.synchronizer import Deleter
-from odoo.addons.connector.unit.synchronizer import Exporter
+from odoo.addons.connector.unit.synchronizer import Deleter, Exporter
 from odoo.addons.connector.queue.job import job
-from . import environment
 
 _logger = logging.getLogger(__name__)
 
@@ -63,7 +61,8 @@ class ExchangeExporter(Exporter):
         # exports (due to dependencies) and one of them fails.
         # The commit will also release the lock acquired on the binding
         # record
-        self.session.commit()
+        if not tools.config['test_enable']:
+            self.env.cr.commit()
 
         self._after_export()
         return result
@@ -87,9 +86,12 @@ class ExchangeExporter(Exporter):
         sql = ("SELECT id FROM %s WHERE ID = %%s FOR UPDATE NOWAIT" %
                self.model._table)
         try:
-            self.session.cr.execute(sql, (self.binding_id, ),
-                                    log_exceptions=False)
+            self.env.cr.execute(sql, (self.binding_id, ),
+                                log_exceptions=False)
         except psycopg2.OperationalError:
+            _logger.info('A concurrent job is already exporting the same '
+                         'record (%s with id %s). Job delayed later.',
+                         self.model._name, self.binding_id)
             raise RetryableJobError(
                 'A concurrent job is already exporting the same record '
                 '(%s with id %s). The job will be retried later.' %
@@ -185,19 +187,18 @@ class ExchangeDisabler(Deleter):
 
 
 @job
-def export_record(session, model_name, binding_id, fields=None):
+def export_record(env, model_name, binding_id, fields=None):
     """ Export a record from Exchange """
-    record = session.env[model_name].browse(binding_id)
-    env = environment.get_environment(session, model_name,
-                                      record.backend_id.id)
-    exporter = env.get_connector_unit(ExchangeExporter)
-    return exporter.run(binding_id, fields=fields)
+    record = env[model_name].browse(binding_id)
+    with record.backend_id.get_environment(model_name) as connector_env:
+        exporter = connector_env.get_connector_unit(ExchangeExporter)
+        return exporter.run(binding_id, fields=fields)
 
 
 @job
-def export_delete_record(session, model_name, backend_id, external_id, user_id
-                         ):
+def export_delete_record(env, model_name, backend_id, external_id, user_id):
     """ Delete a record on Exchange """
-    env = environment.get_environment(session, model_name, backend_id)
-    deleter = env.get_connector_unit(ExchangeDisabler)
-    return deleter.run(external_id, user_id)
+    backend = env['exchange.backend'].browse(backend_id)
+    with backend.get_environment(model_name) as connector_env:
+        deleter = connector_env.get_connector_unit(ExchangeDisabler)
+        return deleter.run(external_id, user_id)
