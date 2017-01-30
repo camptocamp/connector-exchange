@@ -29,7 +29,7 @@ class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
 
-            self.exchange_backend.export_contact_partners(self.sync_session)
+            self.exchange_backend.export_contact_partners()
 
             # import record jobs were properly delayed
             self.assertFalse(len(cassette.requests))
@@ -71,7 +71,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
 
-            self.exchange_backend.import_contact_partners(self.sync_session)
+            self.exchange_backend.import_contact_partners()
 
             # import record jobs were properly delayed
             self.assertTrue(len(cassette.requests))

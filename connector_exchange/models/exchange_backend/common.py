@@ -138,7 +138,6 @@ class ExchangeBackend(models.Model):
                             backend.id,
                             user.id,
                             exchange_contact.itemid.value,
-                            sync_session_id=sync_session.id,
                             priority=30)
         return True
 
