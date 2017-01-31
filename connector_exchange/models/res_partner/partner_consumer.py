@@ -21,7 +21,7 @@ from ... import consumer
     ])
 def delay_export(env, model_name, record_id, vals):
     record = env[model_name].browse(record_id)
-    consumer.delay_export(env, model_name, record, vals)
+    consumer.delay_export(record, vals)
 
 
 @on_record_write(model_names=[
@@ -35,7 +35,7 @@ def delay_export_all_bindings(env, model_name, record_id, vals):
         # of the binding
         return
     record = env[model_name].browse(record_id)
-    consumer.delay_export_all_bindings(env, model_name, record, vals)
+    consumer.delay_export_all_bindings(record, vals)
 
 
 @on_record_unlink(model_names=[
@@ -44,7 +44,6 @@ def delay_export_all_bindings(env, model_name, record_id, vals):
     ])
 def delay_disable(env, model_name, binding_record_id):
     record = env[model_name].browse(binding_record_id)
-    record.env = env
     with record.backend_id.get_environment(model_name) as connector_env:
         binder = connector_env.get_connector_unit(Binder)
     external_id = binder.to_backend(binding_record_id)
@@ -58,5 +57,4 @@ def delay_disable(env, model_name, binding_record_id):
     ])
 def delay_disable_all_bindings(env, model_name, record_id):
     record = env[model_name].browse(record_id)
-    consumer.delay_disable_all_bindings(env, model_name,
-                                        record)
+    consumer.delay_disable_all_bindings(record)
