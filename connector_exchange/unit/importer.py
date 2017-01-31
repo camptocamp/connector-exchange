@@ -25,7 +25,6 @@ import odoo
 from odoo import SUPERUSER_ID
 from odoo.addons.connector.connector import ConnectorUnit
 from odoo.addons.queue_job.exception import FailedJobError
-from odoo.addons.queue_job.job import job
 from odoo.addons.connector.unit.synchronizer import Importer
 from odoo import _
 
@@ -241,7 +240,7 @@ class ExchangeImporter(Importer):
                 else:
                     cr.commit()
 
-    def _run(self, item_id, user_id):
+    def _run(self, item_id, user):
         """ Beginning of the synchronization
 
         The first thing we do is to try to acquire an advisory lock
@@ -254,7 +253,7 @@ class ExchangeImporter(Importer):
 
         :param item_id: item_id
         """
-        self.openerp_user = self.env['res.users'].browse(user_id)
+        self.openerp_user = user
         self.external_id = item_id
         lock_name = 'import({}, {}, {}, {})'.format(
             self.backend_record._name,
@@ -350,12 +349,3 @@ class AddCheckpoint(ConnectorUnit):
                        record._model._name,
                        record.id,
                        self.backend_record.id)
-
-
-@job
-def import_record(env, model_name, backend_id, user_id, item_id):
-    """ Import a record from Exchange """
-    backend = env['exchange.backend'].browse(backend_id)
-    with backend.get_environment(model_name) as connector_env:
-        importer = connector_env.get_connector_unit(ExchangeImporter)
-        importer.run(item_id, user_id)
