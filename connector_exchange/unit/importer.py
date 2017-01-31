@@ -24,8 +24,8 @@ from contextlib import closing, contextmanager
 import odoo
 from odoo import SUPERUSER_ID
 from odoo.addons.connector.connector import ConnectorUnit
-from odoo.addons.connector.exception import FailedJobError
-from odoo.addons.connector.queue.job import job
+from odoo.addons.queue_job.exception import FailedJobError
+from odoo.addons.queue_job.job import job
 from odoo.addons.connector.unit.synchronizer import Importer
 from odoo import _
 
