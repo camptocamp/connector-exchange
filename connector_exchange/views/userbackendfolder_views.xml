@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
-    <data>
+<odoo>
 
         <record id="view_user_backend_folder_form" model="ir.ui.view">
             <field name="name">view_user_backend_folder_form</field>
@@ -69,5 +68,4 @@
                   name="Exchange User Folders"
                   action="action_user_backend_folder_view"/>
 
-    </data>
-</openerp>
+</odoo>

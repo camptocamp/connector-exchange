@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
 
-from openerp import models, fields, api, _
-from openerp import tools
-from openerp.addons.calendar.calendar import calendar_id2real_id
+from odoo import models, fields, api, _
+from odoo import tools
+from odoo.addons.calendar.models.calendar import calendar_id2real_id
 _logger = logging.getLogger(__name__)
 
 
@@ -80,7 +80,6 @@ class CalendarEvent(models.Model):
     def write(self, values):
         """Overload write method to trigger connector events"""
         # FIXME: manage alteration of recurrent events
-        # session = ConnectorSession.from_env(self.env)
         for rec in self:
             user = values.get('user_id')
             if not user:
@@ -104,8 +103,6 @@ class CalendarEvent(models.Model):
                         self.browse(real_id).with_context(
                             connector_no_export=True,
                             no_mail_to_attendees=no_mail).unlink()
-                        # delay_disable_all_bindings(session, self._name,
-                        # real_id)
 
             else:
                 # we are dealing with a real event

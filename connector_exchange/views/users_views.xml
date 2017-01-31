@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
-    <data>
+<odoo>
         <record id="view_users_form_connector_exchange" model="ir.ui.view">
             <field name="name">res.users.form.connector.exchange</field>
             <field name="model">res.users</field>
@@ -28,5 +27,4 @@
                 </notebook>
             </field>
         </record>
-    </data>
-</openerp>
+</odoo>

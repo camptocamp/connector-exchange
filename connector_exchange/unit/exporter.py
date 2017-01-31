@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
+# Copyright 2016-2017 Camptocamp SA
 # Author: Nicolas Clavier
 # Copyright 2014 HighCo
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 """
 
@@ -18,12 +18,9 @@ import logging
 
 import psycopg2
 
-from openerp import _
-from openerp.addons.connector.exception import RetryableJobError
-from openerp.addons.connector.unit.synchronizer import Deleter
-from openerp.addons.connector.unit.synchronizer import Exporter
-from openerp.addons.connector.queue.job import job
-from . import environment
+from odoo import _, tools
+from odoo.addons.connector.exception import RetryableJobError
+from odoo.addons.connector.unit.synchronizer import Deleter, Exporter
 
 _logger = logging.getLogger(__name__)
 
@@ -40,18 +37,14 @@ class ExchangeExporter(Exporter):
         super(ExchangeExporter, self).__init__(environment)
         self.external_id = None
         self.binding_id = None
-        self.binding_record = None
 
-    def get_openerp_data(self, binding_id):
-        """
-
-        """
+    def _get_binding(self, binding_id):
+        """ Return the raw Odoo data for ``self.binding_id`` """
         return self.model.browse(self.binding_id)
 
-    def run(self, binding_id, *args, **kwargs):
+    def run(self, binding, *args, **kwargs):
         """ The connectors have to implement the _run method """
-        self.binding_id = binding_id
-        self.binding_record = self.get_openerp_data(binding_id)
+        self.binding = binding
 
         # prevent other jobs to export the same record
         # will be released on commit (or rollback)
@@ -63,7 +56,8 @@ class ExchangeExporter(Exporter):
         # exports (due to dependencies) and one of them fails.
         # The commit will also release the lock acquired on the binding
         # record
-        self.session.commit()
+        if not tools.config['test_enable']:
+            self.env.cr.commit()
 
         self._after_export()
         return result
@@ -87,9 +81,12 @@ class ExchangeExporter(Exporter):
         sql = ("SELECT id FROM %s WHERE ID = %%s FOR UPDATE NOWAIT" %
                self.model._table)
         try:
-            self.session.cr.execute(sql, (self.binding_id, ),
-                                    log_exceptions=False)
+            self.env.cr.execute(sql, (self.binding_id, ),
+                                log_exceptions=False)
         except psycopg2.OperationalError:
+            _logger.info('A concurrent job is already exporting the same '
+                         'record (%s with id %s). Job delayed later.',
+                         self.model._name, self.binding_id)
             raise RetryableJobError(
                 'A concurrent job is already exporting the same record '
                 '(%s with id %s). The job will be retried later.' %
@@ -109,9 +106,9 @@ class ExchangeExporter(Exporter):
 
     def _map_data(self):
         """ Returns an instance of
-        :py:class:`~openerp.addons.connector.unit.mapper.MapRecord`
+        :py:class:`~odoo.addons.connector.unit.mapper.MapRecord`
         """
-        return self.mapper.map_record(self.binding_record)
+        return self.mapper.map_record(self.binding)
 
     def _validate_create_data(self, data):
         """ Check if the values to import are correct
@@ -151,7 +148,11 @@ class ExchangeExporter(Exporter):
         self.backend_adapter.write(self.external_id, data)
 
     def _run(self, fields=None):
-        assert self.binding_id
+        assert self.binding
+
+        if not self.binding.exists():
+            return _('Record to export does no longer exist.')
+
         map_record = self._map_data()
 
         if not self.external_id:
@@ -176,28 +177,9 @@ class ExchangeExporter(Exporter):
 class ExchangeDisabler(Deleter):
     """ Base record disabler for Exchange """
 
-    def run(self, external_id, user_id):
+    def run(self, external_id, user):
         """ Run the synchronization, delete the record on Exchange
         :param external_id: identifier of the record to delete
         """
 
-        return self._run(external_id, user_id)
-
-
-@job
-def export_record(session, model_name, binding_id, fields=None):
-    """ Export a record from Exchange """
-    record = session.env[model_name].browse(binding_id)
-    env = environment.get_environment(session, model_name,
-                                      record.backend_id.id)
-    exporter = env.get_connector_unit(ExchangeExporter)
-    return exporter.run(binding_id, fields=fields)
-
-
-@job
-def export_delete_record(session, model_name, backend_id, external_id, user_id
-                         ):
-    """ Delete a record on Exchange """
-    env = environment.get_environment(session, model_name, backend_id)
-    deleter = env.get_connector_unit(ExchangeDisabler)
-    return deleter.run(external_id, user_id)
+        return self._run(external_id, user)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 import logging
 from pyews.ews.contact import Contact, PostalAddress
@@ -9,12 +9,11 @@ from pyews.ews.data import (EmailKey,
                             PhoneKey,
                             PhysicalAddressType,
                             )
-from openerp import _
-from openerp.addons.connector.exception import FailedJobError
+from odoo import _
+from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
-from ...unit.importer import import_record
 
 
 _logger = logging.getLogger(__name__)
@@ -239,12 +238,12 @@ class PartnerExporter(ExchangeExporter):
         """
             run a delayed job for the exchange record
         """
-        return import_record.delay(self.session,
-                                   'exchange.res.partner',
-                                   self.backend_record.id,
-                                   user_id,
-                                   contact_instance.itemid,
-                                   priority=30)
+        user = self.env['res.users'].browse(user_id)
+        return self.env['exchange.res.partner'].import_record.delay(
+           self.backend_record,
+           user,
+           contact_instance.itemid,
+           priority=30)
 
     def create_exchange_contact(self, fields):
         record, folder = self._create_data(fields=fields)

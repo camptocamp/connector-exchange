@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 """
 
@@ -21,18 +21,15 @@ from pyews.ews.data import FolderClass
 
 from contextlib import closing, contextmanager
 
-import openerp
-from openerp import SUPERUSER_ID
-from openerp.addons.connector.session import ConnectorSession
-from openerp.addons.connector.connector import ConnectorUnit
-from openerp.addons.connector.exception import FailedJobError
-from openerp.addons.connector.queue.job import job
-from openerp.addons.connector.unit.synchronizer import Importer
-from openerp import _
+import odoo
+from odoo import SUPERUSER_ID
+from odoo.addons.connector.connector import ConnectorUnit
+from odoo.addons.queue_job.exception import FailedJobError
+from odoo.addons.connector.unit.synchronizer import Importer
+from odoo import _
 
 from ..backend import exchange_2010
 from ..connector import add_checkpoint
-from . import environment
 
 _logger = logging.getLogger(__name__)
 
@@ -45,7 +42,7 @@ RETRY_WHEN_CONCURRENT_DETECTED = 1  # seconds
 
 
 class ExchangeImporter(Importer):
-    """ Importer which set the sync_session_id in the context """
+    """ Exchange Importer """
 
     # Name of the field which contains the ID
     _id_field = None  # set in sub-classes
@@ -82,11 +79,11 @@ class ExchangeImporter(Importer):
         :param subrecord: subrecord to import
         :param binding_model: name of the binding model for the relation
         :type binding_model: str | unicode
-        :param importer_cls: :class:`openerp.addons.connector.\
+        :param importer_cls: :class:`odoo.addons.connector.\
                                      connector.ConnectorUnit`
                              class or parent class to use for the export.
                              By default: ExchangeImporter
-        :type importer_cls: :class:`openerp.addons.connector.\
+        :type importer_cls: :class:`odoo.addons.connector.\
                                     connector.MetaConnectorUnit`
         :param always: if True, the record is updated even if it already
                        exists, note that it is still skipped if it has
@@ -222,18 +219,17 @@ class ExchangeImporter(Importer):
         This can be used to make a preemptive check in a new transaction,
         for instance to see if another transaction already made the work.
         """
-        with openerp.api.Environment.manage():
-            registry = openerp.modules.registry.RegistryManager.get(
+        with odoo.api.Environment.manage():
+            registry = odoo.modules.registry.RegistryManager.get(
                 self.env.cr.dbname
             )
             with closing(registry.cursor()) as cr:
                 try:
-                    new_env = openerp.api.Environment(cr, self.env.uid,
+                    new_env = odoo.api.Environment(cr, self.env.uid,
                                                       self.env.context)
-                    new_connector_session = ConnectorSession.from_env(new_env)
                     connector_env = self.connector_env.create_environment(
                         self.backend_record.with_env(new_env),
-                        new_connector_session,
+                        self.env,
                         model_name or self.model._name,
                         connector_env=self.connector_env
                     )
@@ -244,7 +240,7 @@ class ExchangeImporter(Importer):
                 else:
                     cr.commit()
 
-    def _run(self, item_id, user_id):
+    def _run(self, item_id, user):
         """ Beginning of the synchronization
 
         The first thing we do is to try to acquire an advisory lock
@@ -257,7 +253,7 @@ class ExchangeImporter(Importer):
 
         :param item_id: item_id
         """
-        self.openerp_user = self.env['res.users'].browse(user_id)
+        self.openerp_user = user
         self.external_id = item_id
         lock_name = 'import({}, {}, {}, {})'.format(
             self.backend_record._name,
@@ -349,15 +345,7 @@ class AddCheckpoint(ConnectorUnit):
     def run(self, openerp_binding_id):
         binding = self.model.browse(openerp_binding_id)
         record = binding.openerp_id
-        add_checkpoint(self.session,
+        add_checkpoint(self.env,
                        record._model._name,
                        record.id,
                        self.backend_record.id)
-
-
-@job
-def import_record(session, model_name, backend_id, user_id, item_id):
-    """ Import a record from Exchange """
-    env = environment.get_environment(session, model_name, backend_id)
-    importer = env.get_connector_unit(ExchangeImporter)
-    importer.run(item_id, user_id)
