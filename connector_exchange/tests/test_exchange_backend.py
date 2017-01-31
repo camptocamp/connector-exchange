@@ -13,8 +13,8 @@ from .common import (
 class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
 
     def test_batch_export_partner_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_record')
         cassette_name = 'test_batch_export_partner_batch'
 
         with my_vcr.use_cassette(cassette_name,
@@ -31,8 +31,8 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
 
     def setUp(self):
         super(TestExchangeBackendSyncImport, self).setUp()
-        import_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
         with my_vcr.use_cassette(cassette_name,
@@ -53,8 +53,8 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
         )
 
     def test_batch_import_partner_batch(self):
-        import_job_path = ('odoo.addons.connector_exchange.models.'
-                           'exchange_backend.common.import_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.import_record')
         cassette_name = 'test_batch_import_partner_batch'
 
         with my_vcr.use_cassette(cassette_name,
@@ -80,8 +80,8 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             )
 
     def test_export_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
         with my_vcr.use_cassette(cassette_name,
@@ -147,10 +147,10 @@ class TestExchangeBackendSyncContactRecordImport(
             )
 
     def test_import_contact(self):
-        export_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_record')
-        import_job_path = ('odoo.addons.connector_exchange.models.'
-                           'res_partner.exporter.import_record')
+        export_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.import_record')
         cassette_name = 'test_import_contact'
 
         with my_vcr.use_cassette(cassette_name,
@@ -184,10 +184,10 @@ class TestExchangeBackendSyncContactRecordDelete(
             )
 
     def test_delete_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_record')
-        export_job_path = ('odoo.addons.connector_exchange.consumer.'
-                           'export_delete_record')
+        import_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_record')
+        export_job_path = ('odoo.addons.connector_exchange.connector.'
+                           'ExchangeBinding.export_delete_record')
         cassette_name = 'test_delete_contact'
 
         with my_vcr.use_cassette(cassette_name,
