@@ -7,7 +7,7 @@ import logging
 
 from odoo import models, fields, api, _
 from odoo import tools
-from odoo.addons.calendar.calendar import calendar_id2real_id
+from odoo.addons.calendar.models.calendar import calendar_id2real_id
 _logger = logging.getLogger(__name__)
 
 
