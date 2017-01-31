@@ -9,7 +9,7 @@ from pyews.ews.data import (EmailKey,
                             PhoneKey,
                             PhysicalAddressType
                             )
-from odoo.addons.connector.exception import FailedJobError
+from odoo.addons.queue_job.exception import FailedJobError
 from odoo import _
 from ...backend import exchange_2010
 from ...unit.importer import ExchangeImporter
