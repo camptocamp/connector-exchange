@@ -101,8 +101,10 @@ class ExchangeBackend(models.Model):
                     continue
 
                 # get all contacts for this user
-                co_env = backend.get_environment('exchange.res.partner')
-                adapter = co_env.get_connector_unit(PartnerBackendAdapter)
+                model_name = 'exchange.res.partner'
+                with backend.get_environment(model_name) as connector_env:
+                    adapter = connector_env.get_connector_unit(
+                        PartnerBackendAdapter)
                 subst = {
                     'u_login': user.login,
                     'exchange_suffix': user.company_id.exchange_suffix or '',
@@ -177,8 +179,10 @@ class ExchangeBackend(models.Model):
                     continue
 
                 # get all contacts for this user
-                co_env = backend.get_environment('exchange.calendar.event')
-                adapter = co_env.get_connector_unit(EventBackendAdapter)
+                model_name = 'exchange.calendar.event'
+                with backend.get_environment(model_name) as connector_env:
+                    adapter = connector_env.get_connector_unit(
+                        EventBackendAdapter)
                 subst = {
                     'u_login': user.login,
                     'exchange_suffix': user.company_id.exchange_suffix or '',

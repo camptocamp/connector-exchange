@@ -44,8 +44,8 @@ def delay_export_all_bindings(env, model_name, record_id, vals):
 def delay_disable(env, model_name, binding_record_id):
     record = env[model_name].browse(binding_record_id)
     record.env = env
-    co_env = record.backend_id.get_environment(model_name)
-    binder = co_env.get_connector_unit(Binder)
+    with record.backend_id.get_environment(model_name) as connector_env:
+        binder = connector_env.get_connector_unit(Binder)
     magento_id = binder.to_backend(binding_record_id)
     if magento_id:
         export_delete_record.delay(env, model_name,

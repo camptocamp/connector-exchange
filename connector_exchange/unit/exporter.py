@@ -40,17 +40,20 @@ class ExchangeExporter(Exporter):
         self.binding_id = None
         self.binding_record = None
 
-    def _get_binding(self, binding_id):
-        """ Rutern the raw Odoo data for ``self.binding_id`` """
+    def get_openerp_data(self, binding_id):
+        """
+
+        """
         return self.model.browse(self.binding_id)
 
-    def run(self, binding, *args, **kwargs):
+    def run(self, binding_id, *args, **kwargs):
         """ The connectors have to implement the _run method """
+        self.binding_id = binding_id
+        self.binding_record = self.get_openerp_data(binding_id)
+
         # prevent other jobs to export the same record
         # will be released on commit (or rollback)
         self._lock()
-
-        self.binding = binding
 
         result = self._run(*args, **kwargs)
 
@@ -187,16 +190,15 @@ class ExchangeDisabler(Deleter):
 def export_record(env, model_name, binding_id, fields=None):
     """ Export a record from Exchange """
     record = env[model_name].browse(binding_id)
-    co_env = record.backend_id.get_environment(model_name)
-    exporter = co_env.get_connector_unit(ExchangeExporter)
-    return exporter.run(binding_id, fields=fields)
+    with record.backend_id.get_environment(model_name) as connector_env:
+        exporter = connector_env.get_connector_unit(ExchangeExporter)
+        return exporter.run(binding_id, fields=fields)
 
 
 @job
 def export_delete_record(env, model_name, backend_id, external_id, user_id):
     """ Delete a record on Exchange """
     backend = env['exchange.backend'].browse(backend_id)
-    backend.env = env
-    co_env = backend.get_environment(model_name)
-    deleter = co_env.get_connector_unit(ExchangeDisabler)
-    return deleter.run(external_id, user_id)
+    with backend.get_environment(model_name) as connector_env:
+        deleter = connector_env.get_connector_unit(ExchangeDisabler)
+        return deleter.run(external_id, user_id)

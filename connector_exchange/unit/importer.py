@@ -356,7 +356,6 @@ class AddCheckpoint(ConnectorUnit):
 def import_record(env, model_name, backend_id, user_id, item_id):
     """ Import a record from Exchange """
     backend = env['exchange.backend'].browse(backend_id)
-    co_env = backend.get_environment(model_name)
-    backend.env = env
-    importer = co_env.get_connector_unit(ExchangeImporter)
-    importer.run(item_id, user_id)
+    with backend.get_environment(model_name) as connector_env:
+        importer = connector_env.get_connector_unit(ExchangeImporter)
+        importer.run(item_id, user_id)

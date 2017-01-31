@@ -11,7 +11,6 @@ from vcr import VCR
 
 from odoo import SUPERUSER_ID
 from odoo.tests.common import TransactionCase
-from odoo.addons.connector_exchange.connector import get_environment
 
 
 # This is the true URL. Please be sure to record the calls made to it
