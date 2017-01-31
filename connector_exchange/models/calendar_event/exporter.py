@@ -20,8 +20,6 @@ from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
-from ...unit.importer import import_record
-from ...unit.exporter import export_delete_record
 
 _logger = logging.getLogger(__name__)
 
@@ -373,20 +371,19 @@ class CalendarEventExporter(ExchangeExporter):
         """
             run a delayed job for the exchange record
         """
-        return import_record.delay(self.session,
-                                   'exchange.calendar.event',
-                                   self.backend_record.id,
-                                   user_id,
-                                   calendar_event_instance.itemid,
-                                   priority=30)
+        user = self.env['res.users'].browse(user_id)
+        return self.env['exchange.calendar.event'].import_record.delay(
+            self.backend_record,
+            user,
+            calendar_event_instance.itemid,
+            priority=30)
 
     def run_delayed_delete_of_exchange_calendar_event(self, user_id,
                                                       calendar_event_instance):
-        return export_delete_record.delay(self.session,
-                                          'exchange.calendar.event',
-                                          self.backend_record.id,
+        user = self.env['res.users'].browse(user_id)
+        return self.backend_record.export_delete_record.delay(
                                           calendar_event_instance.itemid.value,
-                                          user_id,
+                                          user,
                                           priority=30)
 
     def create_exchange_calendar_event(self, fields):
