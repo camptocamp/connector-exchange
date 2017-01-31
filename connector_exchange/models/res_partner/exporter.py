@@ -14,7 +14,6 @@ from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
-from ...unit.importer import import_record
 
 
 _logger = logging.getLogger(__name__)
@@ -239,12 +238,12 @@ class PartnerExporter(ExchangeExporter):
         """
             run a delayed job for the exchange record
         """
-        return import_record.delay(self.env,
-                                   'exchange.res.partner',
-                                   self.backend_record.id,
-                                   user_id,
-                                   contact_instance.itemid,
-                                   priority=30)
+        user = self.env['res.users'].browse(user_id)
+        return self.env['exchange.res.partner'].import_record.delay(
+           self.backend_record,
+           user,
+           contact_instance.itemid,
+           priority=30)
 
     def create_exchange_contact(self, fields):
         record, folder = self._create_data(fields=fields)
@@ -351,8 +350,7 @@ class PartnerDisabler(ExchangeDisabler):
                 _('Unable to find folder %s in Exchange' % deleted_folder.name)
                 )
 
-    def _run(self, external_id, user_id):
+    def _run(self, external_id, user):
         """ Implementation of the deletion """
-        user = self.env['res.users'].browse(user_id)
         self.backend_adapter.set_primary_smtp_address(user)
         self.move_contact(external_id, user)

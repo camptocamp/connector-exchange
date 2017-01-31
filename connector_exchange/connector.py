@@ -4,6 +4,10 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import models, fields, api
+from odoo.addons.queue_job.job import job
+
+from unit.exporter import ExchangeExporter, ExchangeDisabler
+from unit.importer import ExchangeImporter
 
 
 def add_checkpoint(env, model_name, record_id,
@@ -85,3 +89,26 @@ class ExchangeBinding(models.AbstractModel):
     def get_backend(self):
         self.ensure_one()
         return self.backend_id
+
+    @job
+    def import_record(self, backend, user, item_id):
+        """ Import a record from Exchange """
+        with backend.get_environment(self._name) as connector_env:
+            importer = connector_env.get_connector_unit(ExchangeImporter)
+            importer.run(item_id, user)
+
+    @job
+    def export_record(self, fields=None):
+        """ Export a record from Exchange """
+        self.ensure_one()
+        with self.backend_id.get_environment(self._name) as connector_env:
+            exporter = connector_env.get_connector_unit(ExchangeExporter)
+            return exporter.run(self, fields=fields)
+
+    @job
+    def export_delete_record(self, external_id, user):
+        """ Delete a record on Exchange """
+        self.ensure_one()
+        with self.backend_id.get_environment(self._name) as connector_env:
+            deleter = connector_env.get_connector_unit(ExchangeDisabler)
+            return deleter.run(external_id, user)

@@ -95,6 +95,5 @@ class ExchangeBackendTransactionCase(TransactionCase):
              }
             )
 
-    def _get_environment(self, model_name):
-        return get_environment(self.env, model_name,
-                               self.lefac_backend.id)
+    #def _get_environment(self, model_name):
+        #return self.lefac_backend.get_environment(model_name)

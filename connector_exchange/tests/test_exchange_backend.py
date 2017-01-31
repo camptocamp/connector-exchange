@@ -4,14 +4,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 import mock
 
-from odoo.addons.connector_exchange.unit.importer import (
-    import_record,
-)
-from odoo.addons.connector_exchange.unit.exporter import (
-    export_record,
-    export_delete_record,
-)
-
 from .common import (
     my_vcr,
     ExchangeBackendTransactionCase,
@@ -47,9 +39,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
             self.create_exchange_binding()
-            export_record(self.env,
-                          'exchange.res.partner',
-                          self.binding.id)
+            self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
             self.assertTrue(len(cassette.requests))
@@ -98,9 +88,7 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
                                  match_on=['method', 'query']) as cassette, \
                 mock.patch(import_job_path):
             self.create_exchange_binding()
-            export_record(self.env,
-                          'exchange.res.partner',
-                          self.binding.id)
+            self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
@@ -137,10 +125,8 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             # apply all 'applicable' changeset rules
             # (see demo file  'in partner_changeset' module)
             self.binding.changeset_ids.mapped('change_ids').apply()
-            export_record(self.env,
-                          'exchange.res.partner',
-                          self.binding.id,
-                          fields=['zip', 'city', 'email', 'phone', 'lastname'])
+            self.binding.export_record(
+                fields=['zip', 'city', 'email', 'phone', 'lastname'])
 
             # email won't be changed because of partner changeset rules ...
             self.assertTrue(self.binding.change_key)
@@ -172,18 +158,15 @@ class TestExchangeBackendSyncContactRecordImport(
                 mock.patch(import_job_path), \
                 mock.patch(export_job_path):
             self.create_exchange_binding()
-            export_record(self.env,
-                          'exchange.res.partner',
-                          self.binding.id)
+            self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
-            import_record(self.env,
-                          'exchange.res.partner',
-                          self.exchange_backend.id,
-                          self.created_user.user_id.id,
-                          self.binding.external_id
-                          )
+            self.env['exchange.res.partner'].import_record(
+                self.exchange_backend,
+                self.created_user.user_id,
+                self.binding.external_id
+                )
             self.assertTrue(len(cassette.requests))
 
 
@@ -212,15 +195,12 @@ class TestExchangeBackendSyncContactRecordDelete(
                 mock.patch(import_job_path), \
                 mock.patch(export_job_path):
             self.create_exchange_binding()
-            export_record(self.env,
-                          'exchange.res.partner',
-                          self.binding.id)
+            self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
 
-            export_delete_record(self.env,
-                                 'exchange.res.partner',
-                                 self.exchange_backend.id,
-                                 self.binding.external_id
-                                 )
+            self.binding.export_delete_record(
+                self.binding.external_id,
+                self.env.user
+            )
             self.assertTrue(len(cassette.requests))
