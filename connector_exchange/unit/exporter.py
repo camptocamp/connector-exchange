@@ -21,7 +21,7 @@ import psycopg2
 from odoo import _, tools
 from odoo.addons.connector.exception import RetryableJobError
 from odoo.addons.connector.unit.synchronizer import Deleter, Exporter
-from odoo.addons.connector.queue.job import job
+from odoo.addons.queue_job.job import job
 
 _logger = logging.getLogger(__name__)
 
