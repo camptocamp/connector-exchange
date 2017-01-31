@@ -9,7 +9,6 @@ from odoo.addons.connector.event import (on_record_write,
                                             )
 from odoo.addons.connector.connector import Binder
 from ... import consumer
-from ...unit.exporter import export_delete_record
 
 
 @on_record_create(model_names=[
@@ -21,7 +20,8 @@ from ...unit.exporter import export_delete_record
     'exchange.calendar.event',
     ])
 def delay_export(env, model_name, record_id, vals):
-    consumer.delay_export(env, model_name, record_id, vals)
+    record = env[model_name].browse(record_id)
+    consumer.delay_export(env, model_name, record, vals)
 
 
 @on_record_write(model_names=[
@@ -34,7 +34,8 @@ def delay_export_all_bindings(env, model_name, record_id, vals):
         # create an export job because it will be created by the creation
         # of the binding
         return
-    consumer.delay_export_all_bindings(env, model_name, record_id, vals)
+    record = env[model_name].browse(record_id)
+    consumer.delay_export_all_bindings(env, model_name, record, vals)
 
 
 @on_record_unlink(model_names=[
@@ -46,11 +47,9 @@ def delay_disable(env, model_name, binding_record_id):
     record.env = env
     with record.backend_id.get_environment(model_name) as connector_env:
         binder = connector_env.get_connector_unit(Binder)
-    magento_id = binder.to_backend(binding_record_id)
-    if magento_id:
-        export_delete_record.delay(env, model_name,
-                                   record.backend_id.id, magento_id,
-                                   record.user_id.id)
+    external_id = binder.to_backend(binding_record_id)
+    if external_id:
+        record.export_delete_record.delay(external_id, record.user_id)
 
 
 @on_record_unlink(model_names=[
@@ -58,5 +57,6 @@ def delay_disable(env, model_name, binding_record_id):
     'calendar.event',
     ])
 def delay_disable_all_bindings(env, model_name, record_id):
+    record = env[model_name].browse(record_id)
     consumer.delay_disable_all_bindings(env, model_name,
-                                        record_id)
+                                        record)

@@ -14,7 +14,6 @@ from odoo import models, fields, api
 
 from odoo.addons.connector.connector import ConnectorEnvironment
 
-from ...unit.importer import import_record
 from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
 
@@ -134,11 +133,9 @@ class ExchangeBackend(models.Model):
                             odoo_categ = True
                             break
                     if odoo_categ:
-                        import_record.delay(
-                            self.env,
-                            'exchange.res.partner',
-                            backend.id,
-                            user.id,
+                        self.env['exchange.res.partner'].import_record.delay(
+                            backend,
+                            user,
                             exchange_contact.itemid.value,
                             priority=30)
         return True
@@ -216,12 +213,11 @@ class ExchangeBackend(models.Model):
                     if (odoo_categ and
                             sensitivity.value != SensitivityType.Private and
                             sensitivity.value != SensitivityType.Personal):
-                        import_record.delay(self.env,
-                                            'exchange.calendar.event',
-                                            backend.id,
-                                            user.id,
-                                            exchange_event.itemid.value,
-                                            priority=30)
+                        self.env['exchange.calendar.event'].import_record.delay(
+                            backend,
+                            user,
+                            exchange_event.itemid.value,
+                            priority=30)
                         imported_events.append(exchange_event.itemid.value)
 
                 to_delete = list(set(existing_events) - set(imported_events))
