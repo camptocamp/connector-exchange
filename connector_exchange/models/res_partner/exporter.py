@@ -10,7 +10,7 @@ from pyews.ews.data import (EmailKey,
                             PhysicalAddressType,
                             )
 from odoo import _
-from odoo.addons.connector.exception import FailedJobError
+from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010

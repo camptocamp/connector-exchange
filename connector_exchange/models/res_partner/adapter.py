@@ -4,7 +4,7 @@
 
 from pyews.ews.data import FolderClass
 from odoo import _
-from odoo.addons.connector.exception import FailedJobError
+from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.backend_adapter import ExchangeAdapter
 from ...backend import exchange_2010
 
