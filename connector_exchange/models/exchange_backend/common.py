@@ -20,7 +20,6 @@ from ..calendar_event.adapter import EventBackendAdapter
 _logger = logging.getLogger(__name__)
 
 
-
 class ExchangeBackend(models.Model):
     _name = 'exchange.backend'
     _description = 'Exchange Backend'
