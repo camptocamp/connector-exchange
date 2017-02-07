@@ -6,6 +6,8 @@ import mock
 
 from contextlib2 import ExitStack
 
+from odoo.addons.queue_job import job
+
 from .common import (
     my_vcr,
     ExchangeBackendTransactionCase,
@@ -15,15 +17,13 @@ from .common import (
 class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
 
     def test_batch_export_partner_contact(self):
-        job_path = ('odoo.addons.connector_exchange.connector.'
-                    'ExchangeBinding.export_record')
         cassette_name = 'test_batch_export_partner_batch'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(job_path))
+            cm.enter_context(mock.patch.object(job, 'job'))
 
             self.exchange_backend.export_contact_partners()
 
@@ -41,8 +41,9 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
+            cm.enter_context(mock.patch.object(job, 'job'))
+
             self.create_exchange_binding()
-            cm.enter_context(mock.patch.object(self.binding, 'export_record'))
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -63,7 +64,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            cm.enter_context(mock.patch.object(self.binding, 'import_record'))
+            cm.enter_context(mock.patch.object(job, 'job'))
             self.exchange_backend.import_contact_partners()
 
             # import record jobs were properly delayed
@@ -89,8 +90,9 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
+            cm.enter_context(mock.patch.object(job, 'job'))
+
             self.create_exchange_binding()
-            cm.enter_context(mock.patch.object(self.binding, 'export_record'))
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -150,17 +152,15 @@ class TestExchangeBackendSyncContactRecordImport(
             )
 
     def test_import_contact(self):
-        mock_methods = ['export_record', 'import_method']
         cassette_name = 'test_import_contact'
 
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
+            cm.enter_context(mock.patch.object(job, 'job'))
 
             self.create_exchange_binding()
-            [cm.enter_context(mock.patch.object(self.binding, m))
-             for m in mock_methods]
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -187,16 +187,15 @@ class TestExchangeBackendSyncContactRecordDelete(
             )
 
     def test_delete_contact(self):
-        mock_methods = ['export_record', 'import_method']
         cassette_name = 'test_delete_contact'
 
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
+            cm.enter_context(mock.patch.object(job, 'job'))
+
             self.create_exchange_binding()
-            [cm.enter_context(mock.patch.object(self.binding, m))
-             for m in mock_methods]
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
