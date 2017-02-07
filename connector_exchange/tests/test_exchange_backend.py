@@ -15,13 +15,15 @@ from .common import (
 class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
 
     def test_batch_export_partner_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_record')
+        job_path = ('odoo.addons.connector_exchange.connector.'
+                    'ExchangeBinding.export_record')
         cassette_name = 'test_batch_export_partner_batch'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(job_path))
 
             self.exchange_backend.export_contact_partners()
 
@@ -33,17 +35,14 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
 
     def setUp(self):
         super(TestExchangeBackendSyncImport, self).setUp()
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(import_job_path))
-
             self.create_exchange_binding()
+            cm.enter_context(mock.patch.object(self.binding, 'export_record'))
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -58,16 +57,13 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
         )
 
     def test_batch_import_partner_batch(self):
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.import_record')
         cassette_name = 'test_batch_import_partner_batch'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(import_job_path))
-
+            cm.enter_context(mock.patch.object(self.binding, 'import_record'))
             self.exchange_backend.import_contact_partners()
 
             # import record jobs were properly delayed
@@ -87,16 +83,14 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             )
 
     def test_export_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(import_job_path))
             self.create_exchange_binding()
+            cm.enter_context(mock.patch.object(self.binding, 'export_record'))
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -156,20 +150,17 @@ class TestExchangeBackendSyncContactRecordImport(
             )
 
     def test_import_contact(self):
-        export_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_record')
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.import_record')
+        mock_methods = ['export_record', 'import_method']
         cassette_name = 'test_import_contact'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(import_job_path))
-            stack.enter_context(mock.patch(export_job_path))
 
             self.create_exchange_binding()
+            [cm.enter_context(mock.patch.object(self.binding, m))
+             for m in mock_methods]
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
@@ -196,20 +187,16 @@ class TestExchangeBackendSyncContactRecordDelete(
             )
 
     def test_delete_contact(self):
-        import_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_record')
-        export_job_path = ('odoo.addons.connector_exchange.connector.'
-                           'ExchangeBinding.export_delete_record')
+        mock_methods = ['export_record', 'import_method']
         cassette_name = 'test_delete_contact'
 
-        with ExitStack() as stack:
-            cassette = stack.enter_context(
+        with ExitStack() as cm:
+            cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
             ))
-            stack.enter_context(mock.patch(import_job_path))
-            stack.enter_context(mock.patch(export_job_path))
-
             self.create_exchange_binding()
+            [cm.enter_context(mock.patch.object(self.binding, m))
+             for m in mock_methods]
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
             self.assertTrue(self.binding.change_key)
