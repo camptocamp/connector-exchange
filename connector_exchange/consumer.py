@@ -8,7 +8,7 @@ def delay_export(record, vals):
     if record.env.context.get('connector_no_export'):
         return
     fields = vals.keys()
-    record.export_record.delay(fields=fields)
+    record.with_delay().export_record(fields=fields)
 
 
 def delay_export_all_bindings(record, vals):
@@ -20,11 +20,11 @@ def delay_export_all_bindings(record, vals):
         return
     fields = vals.keys()
     for binding in record.exchange_bind_ids:
-        binding.export_record.delay(fields=fields)
+        binding.with_delay().export_record(fields=fields)
 
 
 def delay_disable_all_bindings(record):
     for binding in record.exchange_bind_ids:
-        binding.export_delete_record.delay(
+        binding.with_delay().export_delete_record(
             binding.external_id,
             binding.user_id)
