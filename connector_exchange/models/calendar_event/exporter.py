@@ -372,7 +372,7 @@ class CalendarEventExporter(ExchangeExporter):
             run a delayed job for the exchange record
         """
         user = self.env['res.users'].browse(user_id)
-        return self.env['exchange.calendar.event'].import_record.delay(
+        return self.env['exchange.calendar.event'].with_delay().import_record(
             self.backend_record,
             user,
             calendar_event_instance.itemid,
@@ -381,10 +381,10 @@ class CalendarEventExporter(ExchangeExporter):
     def run_delayed_delete_of_exchange_calendar_event(self, user_id,
                                                       calendar_event_instance):
         user = self.env['res.users'].browse(user_id)
-        return self.backend_record.export_delete_record.delay(
-                                          calendar_event_instance.itemid.value,
-                                          user,
-                                          priority=30)
+        return self.backend_record.with_delay().export_delete_record(
+            calendar_event_instance.itemid.value,
+            user,
+            priority=30)
 
     def create_exchange_calendar_event(self, fields):
         record, folder = self._create_data(fields=fields)

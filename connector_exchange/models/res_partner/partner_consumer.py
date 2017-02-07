@@ -48,7 +48,7 @@ def delay_disable(env, model_name, binding_record_id):
         binder = connector_env.get_connector_unit(Binder)
     external_id = binder.to_backend(binding_record_id)
     if external_id:
-        record.export_delete_record.delay(external_id, record.user_id)
+        record.with_delay().export_delete_record(external_id, record.user_id)
 
 
 @on_record_unlink(model_names=[
