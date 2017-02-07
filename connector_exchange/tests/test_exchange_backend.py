@@ -4,6 +4,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 import mock
 
+from contextlib2 import ExitStack
+
 from .common import (
     my_vcr,
     ExchangeBackendTransactionCase,
@@ -35,9 +37,12 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
                            'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(import_job_path))
+
             self.create_exchange_binding()
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
@@ -57,9 +62,11 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
                            'ExchangeBinding.import_record')
         cassette_name = 'test_batch_import_partner_batch'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(import_job_path))
 
             self.exchange_backend.import_contact_partners()
 
@@ -84,9 +91,11 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
                            'ExchangeBinding.export_record')
         cassette_name = 'test_export_contact'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(import_job_path))
             self.create_exchange_binding()
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
@@ -153,10 +162,13 @@ class TestExchangeBackendSyncContactRecordImport(
                            'ExchangeBinding.import_record')
         cassette_name = 'test_import_contact'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path), \
-                mock.patch(export_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(import_job_path))
+            stack.enter_context(mock.patch(export_job_path))
+
             self.create_exchange_binding()
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
@@ -190,10 +202,13 @@ class TestExchangeBackendSyncContactRecordDelete(
                            'ExchangeBinding.export_delete_record')
         cassette_name = 'test_delete_contact'
 
-        with my_vcr.use_cassette(cassette_name,
-                                 match_on=['method', 'query']) as cassette, \
-                mock.patch(import_job_path), \
-                mock.patch(export_job_path):
+        with ExitStack() as stack:
+            cassette = stack.enter_context(
+                my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
+            ))
+            stack.enter_context(mock.patch(import_job_path))
+            stack.enter_context(mock.patch(export_job_path))
+
             self.create_exchange_binding()
             self.binding.export_record()
             self.assertTrue(self.binding.external_id)
