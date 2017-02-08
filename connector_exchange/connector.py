@@ -10,13 +10,6 @@ from unit.exporter import ExchangeExporter, ExchangeDisabler
 from unit.importer import ExchangeImporter
 
 
-def add_checkpoint(env, model_name, record_id,
-                   backend_model_name, backend_id):
-    checkpoint_model = env['connector.checkpoint']
-    return checkpoint_model.create_from_name(model_name, record_id,
-                                             backend_model_name, backend_id)
-
-
 class ExchangeBinding(models.AbstractModel):
     _name = 'exchange.binding'
     _inherit = 'external.binding'

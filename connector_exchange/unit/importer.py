@@ -29,7 +29,6 @@ from odoo.addons.connector.unit.synchronizer import Importer
 from odoo import _
 
 from ..backend import exchange_2010
-from ..connector import add_checkpoint
 
 _logger = logging.getLogger(__name__)
 
@@ -333,6 +332,13 @@ class ExchangeImporter(Importer):
             raise FailedJobError(
                 _('Unable to find folder "Contacts" in Exchange')
                 )
+
+
+def add_checkpoint(env, model_name, record_id,
+                   backend_model_name, backend_id):
+    checkpoint_model = env['connector.checkpoint']
+    return checkpoint_model.create_from_name(model_name, record_id,
+                                             backend_model_name, backend_id)
 
 
 @exchange_2010
