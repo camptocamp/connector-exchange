@@ -20,14 +20,14 @@ _logger = logging.getLogger(__name__)
 EXCHANGE_STREET_SEPARATOR = ' // '
 
 
-def _compute_subst(binding_record):
+def _compute_subst(binding):
     return {
-        'street_computed': _construct_street(binding_record,
+        'street_computed': _construct_street(binding,
                                              sep=EXCHANGE_STREET_SEPARATOR),
-        'city': binding_record.city,
-        'zipcode': binding_record.zip,
-        'state': binding_record.state_id.name,
-        'country': binding_record.country_id.name,
+        'city': binding.city,
+        'zipcode': binding.zip,
+        'state': binding.state_id.name,
+        'country': binding.country_id.name,
     }
 
 
@@ -86,7 +86,7 @@ class PartnerExporter(ExchangeExporter):
         for f, v in SIMPLE_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
-            odoo_value = getattr(self.binding_record, f)
+            odoo_value = getattr(self.binding, f)
             if not odoo_value:
                 odoo_value = None
 
@@ -101,7 +101,7 @@ class PartnerExporter(ExchangeExporter):
         for f, v in RELATIONAL_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
-            odoo_value = getattr(self.binding_record, f)
+            odoo_value = getattr(self.binding, f)
             if odoo_value:
                 odoo_value = odoo_value.name
             else:
@@ -118,7 +118,7 @@ class PartnerExporter(ExchangeExporter):
         for f, v in MULTIPLE_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
-            odoo_value = getattr(self.binding_record, f)
+            odoo_value = getattr(self.binding, f)
             if not odoo_value:
                 odoo_value = None
 
@@ -139,7 +139,7 @@ class PartnerExporter(ExchangeExporter):
                 for atype in contact.physical_addresses.entries:
                     if atype.attrib['Key'] == PhysicalAddressType.Business:
                         not_found = False
-                        subst = _compute_subst(self.binding_record)
+                        subst = _compute_subst(self.binding)
 
                         for key, valu in ADDRESS_DICT[
                                 "physical_addresses"].iteritems():
@@ -152,7 +152,7 @@ class PartnerExporter(ExchangeExporter):
                 addr = PostalAddress()
                 addr.add_attrib('Key', PhysicalAddressType.Business)
 
-                subst = _compute_subst(self.binding_record)
+                subst = _compute_subst(self.binding)
                 for key, valu in ADDRESS_DICT[
                         "physical_addresses"].iteritems():
                     valu = valu % subst
@@ -169,7 +169,7 @@ class PartnerExporter(ExchangeExporter):
             and fill information on 'res.users.backend.folder' object (if no
             existing one in Exchange 'Contacts' folder, create).
         """
-        br = self.binding_record
+        br = self.binding
         odoo_folder = br.user_id.find_folder(br.backend_id.id)
         adapter = self.backend_adapter
         folder = None
@@ -183,7 +183,7 @@ class PartnerExporter(ExchangeExporter):
     def _update_data(self, fields=None, **kwargs):
         exchange_service = self.backend_adapter.ews
         contact = exchange_service.GetContacts(
-            [self.binding_record.external_id])[0]
+            [self.binding.external_id])[0]
         self.fill_contact(contact, fields)
         # add Odoo category on create contact on exchange
         contact.categories.add('Odoo')
@@ -193,7 +193,7 @@ class PartnerExporter(ExchangeExporter):
     def _create_data(self, fields=None):
         exchange_service = self.backend_adapter.ews
         parent_folder_id = self.check_folder_still_exists(
-            self.binding_record.current_folder
+            self.binding.current_folder
             ).Id
         contact = Contact(exchange_service, parent_folder_id)
         self.fill_contact(contact, fields)
@@ -217,7 +217,7 @@ class PartnerExporter(ExchangeExporter):
 
     def get_exchange_record(self):
         return self.backend_adapter.ews.GetContacts(
-            [self.binding_record.external_id])
+            [self.binding.external_id])
 
     def find_by_email(self):
         """
@@ -225,11 +225,11 @@ class PartnerExporter(ExchangeExporter):
             the partner we try to export
         """
         parent_folder_id = self.check_folder_still_exists(
-            self.binding_record.current_folder
+            self.binding.current_folder
         ).Id
         response = self.backend_adapter.ews.SearchContactByEmail(
             parent_folder_id,
-            self.binding_record.email)
+            self.binding.email)
 
         return response
 
@@ -250,7 +250,7 @@ class PartnerExporter(ExchangeExporter):
         if not record:
             return _('Nothing to export.')
         Id, CK = self._create(folder, record)
-        self.binding_record.with_context(connector_no_export=True).write(
+        self.binding.with_context(connector_no_export=True).write(
             {'change_key': CK, 'external_id': Id})
 
     def update_existing(self, fields):
@@ -258,23 +258,23 @@ class PartnerExporter(ExchangeExporter):
         if not record:
             return _('Nothing to export.')
         response = self._update(record)
-        self.binding_record.with_context(
+        self.binding.with_context(
             connector_no_export=True).write(
             {'change_key': response[0].change_key.value})
 
     def change_key_equals(self, exchange_record):
         return (
-            exchange_record.change_key.value == self.binding_record.change_key)
+            exchange_record.change_key.value == self.binding.change_key)
 
     def _run(self, fields=None):
-        assert self.binding_id
-        user = self.binding_record.user_id
+        assert self.binding
+        user = self.binding.user_id
         self.backend_adapter.set_primary_smtp_address(user)
 
-        if not self.binding_record.external_id:
+        if not self.binding.external_id:
             fields = None
 
-        if not self.binding_record.external_id:
+        if not self.binding.external_id:
             # create contact in exchange
             self.create_exchange_contact(fields)
         else:
@@ -297,7 +297,7 @@ class PartnerExporter(ExchangeExporter):
                 self.create_exchange_contact(fields)
 
         return _("Record exported with ID %s on Exchange") % (
-            self.binding_record.external_id)
+            self.binding.external_id)
 
 
 @exchange_2010
