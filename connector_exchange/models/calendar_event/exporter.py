@@ -16,7 +16,7 @@ from pyews.ews.data import (SensitivityType,
 
 from odoo import _, fields
 from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
-                           DEFAULT_SERVER_DATETIME_FORMAT)
+                        DEFAULT_SERVER_DATETIME_FORMAT)
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
@@ -58,8 +58,8 @@ def convert_to_exchange(date, time=False, rec=False, add_day=False):
         odoo_dt = odoo_dt + datetime.timedelta(days=1)
     return odoo_dt.strftime(EXCHANGE_DATETIME_FORMAT)
 
-# MAPPINGS DECLARATION
 
+# MAPPINGS DECLARATION
 SIMPLE_VALUE_FIELDS = {'name': 'subject',
                        'location': 'location',
                        'description': 'body',
@@ -79,9 +79,9 @@ class CalendarEventExporter(ExchangeExporter):
         | private      | Private      |
         | confidential | Confidential |
         """
-        if self.binding_record['class'] == 'public':
+        if self.binding['privacy'] == 'public':
             calendar.sensitivity.set(SensitivityType.Normal)
-        elif self.binding_record['class'] == 'confidential':
+        elif self.binding['privacy'] == 'confidential':
             calendar.sensitivity.set(SensitivityType.Confidential)
         else:
             calendar.sensitivity.set(SensitivityType.Private)
@@ -96,7 +96,7 @@ class CalendarEventExporter(ExchangeExporter):
         | busy | OOF          |
         | busy | Tentative    |
         """
-        if self.binding_record.show_as == 'free':
+        if self.binding.show_as == 'free':
             calendar.legacy_free_busy_status.set(LegacyFreeBusyStatusType.Free)
         else:
             calendar.legacy_free_busy_status.set(LegacyFreeBusyStatusType.Busy)
@@ -106,33 +106,33 @@ class CalendarEventExporter(ExchangeExporter):
         In Exchange, only one reminder can be set.
         So Odoo side, only the first reminder will be exported to Exchange.
         """
-        alarms = self.binding_record.alarm_ids
+        alarms = self.binding.alarm_ids
         if alarms:
             alarm = alarms[0]
             calendar.is_reminder_set.set(True)
             calendar.reminder_due_by.set(convert_to_exchange(
-                self.binding_record.start, time=True)
+                self.binding.start, time=True)
             )
             calendar.reminder_minutes_before_start.set(alarm.duration_minutes)
         else:
             calendar.is_reminder_set.set(False)
 
     def fill_start_end(self, calendar):
-        if self.binding_record.allday:
+        if self.binding.allday:
             calendar.is_all_day_event.set(True)
             calendar.start.set(convert_to_exchange(
-                self.binding_record.start, time=True)
+                self.binding.start, time=True)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding_record.stop, time=True, add_day=True)
+                self.binding.stop, time=True, add_day=True)
             )
         else:
             calendar.is_all_day_event.set(False)
             calendar.start.set(convert_to_exchange(
-                self.binding_record.start_datetime, time=True)
+                self.binding.start_datetime, time=True)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding_record.stop_datetime, time=True)
+                self.binding.stop_datetime, time=True)
             )
 
     def _attendee_already_exists(self, attendee_email, calendar):
@@ -161,7 +161,7 @@ class CalendarEventExporter(ExchangeExporter):
             'declined': ResponseTypeType.Decline,
             'accepted': ResponseTypeType.Accept,
         }
-        for attendee in self.binding_record.attendee_ids:
+        for attendee in self.binding.attendee_ids:
             if attendee.email == self.openerp_user.email:
                 continue
             # cn, email
@@ -174,7 +174,7 @@ class CalendarEventExporter(ExchangeExporter):
             if (not self._attendee_already_exists(
                     attendee.email, calendar)):
                 att = Attendee()
-                att.mailbox.name.set(attendee.cn)
+                att.mailbox.name.set(attendee.common_name)
                 att.mailbox.email_address.set(attendee.email)
                 att.response_type.set(
                     STATES_MAPPING.get(attendee.state,
@@ -189,28 +189,28 @@ class CalendarEventExporter(ExchangeExporter):
 
         Odoo only supports numbered_recurrence and end_date recurrence.
         """
-        evt = self.binding_record
+        evt = self.binding
         if evt.recurrency:
 
             if evt.end_type == "count":
                 calendar.recurrence.numbered_rec.nb_occurrences.set(evt.count)
-                if self.binding_record.allday:
+                if self.binding.allday:
                     calendar.recurrence.numbered_rec.start_date.set(
-                        convert_to_exchange(self.binding_record.start_date,
+                        convert_to_exchange(self.binding.start_date,
                                             time=False, rec=True)
                     )
                 else:
                     calendar.recurrence.numbered_rec.start_date.set(
-                        convert_to_exchange(self.binding_record.start_datetime,
+                        convert_to_exchange(self.binding.start_datetime,
                                             time=True, rec=True)
                     )
             else:
                 # end_date recurrency
                 calendar.recurrence.end_date_rec.start_date(
-                    convert_to_exchange(self.binding_record.start_date,
+                    convert_to_exchange(self.binding.start_date,
                                         time=False, rec=True))
                 calendar.recurrence.end_date_rec.end_date(
-                    convert_to_exchange(self.binding_record.final_date,
+                    convert_to_exchange(self.binding.final_date,
                                         time=False, rec=True))
 
             ExchangeDays = {
@@ -289,7 +289,7 @@ class CalendarEventExporter(ExchangeExporter):
         for f, v in SIMPLE_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
-            odoo_value = getattr(self.binding_record, f)
+            odoo_value = getattr(self.binding, f)
             if not odoo_value:
                 odoo_value = None
 
@@ -315,7 +315,7 @@ class CalendarEventExporter(ExchangeExporter):
             and fill information on 'res.users.backend.folder' object (if no
             existing one in Exchange 'Calendar' folder, create).
         """
-        br = self.binding_record
+        br = self.binding
         odoo_folder = br.user_id.find_folder(br.backend_id.id, create=True,
                                              folder_type='calendar')
         adapter = self.backend_adapter
@@ -330,7 +330,7 @@ class CalendarEventExporter(ExchangeExporter):
     def _update_data(self, fields=None, **kwargs):
         exchange_service = self.backend_adapter.ews
         calendar = exchange_service.GetCalendarItems(
-            [self.binding_record.external_id])[0]
+            [self.binding.external_id])[0]
         self.fill_calendar_event(calendar, fields)
         calendar.categories.add('Odoo')
 
@@ -339,7 +339,7 @@ class CalendarEventExporter(ExchangeExporter):
     def _create_data(self, fields=None):
         exchange_service = self.backend_adapter.ews
         parent_folder_id = self.check_folder_still_exists(
-            self.binding_record.calendar_folder
+            self.binding.calendar_folder
             ).Id
         calendar = CalendarItem(exchange_service, parent_folder_id)
         self.fill_calendar_event(calendar, fields)
@@ -364,7 +364,7 @@ class CalendarEventExporter(ExchangeExporter):
 
     def get_exchange_record(self):
         return self.backend_adapter.ews.GetCalendarItems(
-            [self.binding_record.external_id])
+            [self.binding.external_id])
 
     def run_delayed_import_of_exchange_calendar_event(self, user_id,
                                                       calendar_event_instance):
@@ -391,7 +391,7 @@ class CalendarEventExporter(ExchangeExporter):
         if not record:
             return _('Nothing to export.')
         Id, CK = self._create(folder, record)
-        self.binding_record.with_context(connector_no_export=True).write(
+        self.binding.with_context(connector_no_export=True).write(
             {'change_key': CK, 'external_id': Id})
 
     def update_existing(self, fields):
@@ -399,21 +399,21 @@ class CalendarEventExporter(ExchangeExporter):
         if not record:
             return _('Nothing to export.')
         response = self._update(record)
-        self.binding_record.with_context(
+        self.binding.with_context(
             connector_no_export=True).write(
             {'external_id': response[0].itemid.value,  # in case of convertId
              'change_key': response[0].change_key.value})
 
     def change_key_equals(self, exchange_record):
         return (
-            exchange_record.change_key.value == self.binding_record.change_key)
+            exchange_record.change_key.value == self.binding.change_key)
 
     def _run(self, fields=None):
-        assert self.binding_id
-        user = self.binding_record.user_id
+        assert self.binding
+        user = self.binding.user_id
         self.openerp_user = user
         self.backend_adapter.set_primary_smtp_address(user)
-        external_id = self.binding_record.external_id
+        external_id = self.binding.external_id
         if not external_id:
             fields = None
 
@@ -438,7 +438,7 @@ class CalendarEventExporter(ExchangeExporter):
             else:
                 # binding defined in Odoo but does not exist anymore
                 # in Exchange --> delete it from Odoo
-                self.binding_record.openerp_id.with_context(
+                self.binding.openerp_id.with_context(
                     connector_no_export=True).unlink()
                 return
 
