@@ -61,27 +61,27 @@ class CalendarEventImporter(ExchangeImporter):
         if event_instance.is_all_day_event.value:
             # fill start_date and stop_date
             vals['allday'] = True
-            vals['start_date'] = transform_to_odoo_date(
+            vals['start'] = transform_to_odoo_date(
                 event_instance.start.value, user_tz, time=False)
-            vals['stop_date'] = transform_to_odoo_date(
+            vals['stop'] = transform_to_odoo_date(
                 event_instance.end.value, user_tz, time=False, end=True)
         else:
             # fill start_datetime and stop_datetime
             vals['allday'] = False
-            vals['start_datetime'] = transform_to_odoo_date(
+            vals['start'] = transform_to_odoo_date(
                 event_instance.start.value, user_tz, time=True)
-            vals['stop_datetime'] = transform_to_odoo_date(
+            vals['stop'] = transform_to_odoo_date(
                 event_instance.end.value, user_tz, time=True)
         return vals
 
     def fill_privacy(self, event_instance):
         vals = {}
         if event_instance.sensitivity.value == SensitivityType.Normal:
-            vals['class'] = 'public'
+            vals['privacy'] = 'public'
         elif event_instance.sensitivity.value == SensitivityType.Confidential:
-            vals['class'] = 'confidential'
+            vals['privacy'] = 'confidential'
         else:
-            vals['class'] = 'private'
+            vals['privacy'] = 'private'
 
         return vals
 
@@ -549,7 +549,7 @@ class CalendarEventImporter(ExchangeImporter):
 
         :param item_id: item_id
         """
-        self.openerp_user = self.env['res.users'].browse(user_id)
+        self.openerp_user = user_id
         self.external_id = item_id
         lock_name = 'import({}, {}, {}, {})'.format(
             self.backend_record._name,
@@ -577,6 +577,7 @@ class CalendarEventImporter(ExchangeImporter):
         event_id = self.external_id
 
         backend = self.backend_record
+
         args = [('backend_id', '=', backend.id),
                 ('user_id', '=', self.openerp_user.id),
                 ('external_id', '=', event_id)]
@@ -588,10 +589,8 @@ class CalendarEventImporter(ExchangeImporter):
 
         if not exchange_events:
             _logger.debug('does not exist --> CREATE')
-            binding = exchange_events._create(data)
-            exchange_events.browse(binding).openerp_id.user_id = (
-                self.openerp_user.id
-            )
+            binding = self._create(data)
+            binding.openerp_id.user_id = self.openerp_user.id
         else:
             _logger.debug('exists --> UPDATE')
             binding = exchange_events[0]
