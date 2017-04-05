@@ -147,10 +147,13 @@ class ExchangeImporter(Importer):
         return map_record.values(for_create=True, **kwargs)
 
     def _create_context_keys(self, keys=None):
-        context_keys = dict(
-            connector_no_export=True,
-            **keys or {}
-        )
+        if keys and 'connector_no_export' in keys:
+            context_keys = dict(**keys or {})
+        else:
+            context_keys = dict(
+                connector_no_export=True,
+                **keys or {}
+            )
         if self.env.user.id == SUPERUSER_ID:
             context_keys['mail_create_nosubscribe'] = True
 
