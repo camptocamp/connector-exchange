@@ -22,7 +22,8 @@ class TestExchangeBackendSyncExport(ExchangeBackendTransactionCase):
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    )
+            )
             cm.enter_context(mock.patch.object(job, 'job'))
 
             self.exchange_backend.export_contact_partners()
@@ -40,7 +41,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    ))
             cm.enter_context(mock.patch.object(job, 'job'))
 
             self.create_exchange_binding()
@@ -63,7 +64,7 @@ class TestExchangeBackendSyncImport(ExchangeBackendTransactionCase):
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    ))
             cm.enter_context(mock.patch.object(job, 'job'))
             self.exchange_backend.import_contact_partners()
 
@@ -81,7 +82,7 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
             {'backend_id': self.exchange_backend.id,
              'user_id': self.created_user.user_id.id,
              'openerp_id': self.created_user.id}
-            )
+        )
 
     def test_export_contact(self):
         cassette_name = 'test_export_contact'
@@ -89,7 +90,7 @@ class TestExchangeBackendSyncContactRecord(ExchangeBackendTransactionCase):
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    ))
             cm.enter_context(mock.patch.object(job, 'job'))
 
             self.create_exchange_binding()
@@ -149,7 +150,7 @@ class TestExchangeBackendSyncContactRecordImport(
             {'backend_id': self.exchange_backend.id,
              'user_id': self.created_user.user_id.id,
              'openerp_id': self.created_user.id}
-            )
+        )
 
     def test_import_contact(self):
         cassette_name = 'test_import_contact'
@@ -157,7 +158,7 @@ class TestExchangeBackendSyncContactRecordImport(
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    ))
             cm.enter_context(mock.patch.object(job, 'job'))
 
             self.create_exchange_binding()
@@ -169,7 +170,7 @@ class TestExchangeBackendSyncContactRecordImport(
                 self.exchange_backend,
                 self.created_user.user_id,
                 self.binding.external_id
-                )
+            )
             self.assertTrue(len(cassette.requests))
 
 
@@ -184,7 +185,7 @@ class TestExchangeBackendSyncContactRecordDelete(
             {'backend_id': self.exchange_backend.id,
              'user_id': self.created_user.user_id.id,
              'openerp_id': self.created_user.id}
-            )
+        )
 
     def test_delete_contact(self):
         cassette_name = 'test_delete_contact'
@@ -192,7 +193,7 @@ class TestExchangeBackendSyncContactRecordDelete(
         with ExitStack() as cm:
             cassette = cm.enter_context(
                 my_vcr.use_cassette(cassette_name, match_on=['method', 'query']
-            ))
+                                    ))
             cm.enter_context(mock.patch.object(job, 'job'))
 
             self.create_exchange_binding()

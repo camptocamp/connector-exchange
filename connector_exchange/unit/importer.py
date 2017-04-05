@@ -228,7 +228,7 @@ class ExchangeImporter(Importer):
             with closing(registry.cursor()) as cr:
                 try:
                     new_env = odoo.api.Environment(cr, self.env.uid,
-                                                      self.env.context)
+                                                   self.env.context)
                     connector_env = self.connector_env.create_environment(
                         self.backend_record.with_env(new_env),
                         self.env,
@@ -334,7 +334,7 @@ class ExchangeImporter(Importer):
         else:
             raise FailedJobError(
                 _('Unable to find folder "Contacts" in Exchange')
-                )
+            )
 
 
 def add_checkpoint(env, model_name, record_id,

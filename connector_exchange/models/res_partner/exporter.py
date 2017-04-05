@@ -239,11 +239,11 @@ class PartnerExporter(ExchangeExporter):
             run a delayed job for the exchange record
         """
         user = self.env['res.users'].browse(user_id)
-        return self.env['exchange.res.partner'].import_record.delay(
-           self.backend_record,
-           user,
-           contact_instance.itemid,
-           priority=30)
+        return self.env['exchange.res.partner'].with_delay(
+            priority=30).import_record(
+                self.backend_record,
+                user,
+                contact_instance.itemid)
 
     def create_exchange_contact(self, fields):
         record, folder = self._create_data(fields=fields)

@@ -52,7 +52,7 @@ class CalendarEvent(models.Model):
             for calendar in self.browse(real_calendars):
                 bindings = calendar.exchange_bind_ids.filtered(
                     lambda a: a.backend_id == backend and a.user_id == user and
-                              a['privacy'] != 'private')
+                    a['privacy'] != 'private')
                 if not bindings:
                     self.env['exchange.calendar.event'].sudo().create(
                         {'backend_id': backend.id,
