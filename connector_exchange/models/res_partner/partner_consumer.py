@@ -4,9 +4,9 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 from odoo.addons.connector.event import (on_record_write,
-                                            on_record_create,
-                                            on_record_unlink
-                                            )
+                                         on_record_create,
+                                         on_record_unlink
+                                         )
 from odoo.addons.connector.connector import Binder
 from ... import consumer
 
