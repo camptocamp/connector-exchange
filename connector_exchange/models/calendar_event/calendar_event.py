@@ -45,14 +45,14 @@ class CalendarEvent(models.Model):
         real_calendars = (
             list(set([calendar_id2real_id(calendar_id=cal.id) for cal in self])
                  )
-            )
-        if self.env.context.get('job_uuid', False):
+        )
+        if self.env.context.get('connector_no_export', False):
             return True
         else:
             for calendar in self.browse(real_calendars):
                 bindings = calendar.exchange_bind_ids.filtered(
                     lambda a: a.backend_id == backend and a.user_id == user and
-                    a['privacy'] != 'private')
+                              a['privacy'] != 'private')
                 if not bindings:
                     self.env['exchange.calendar.event'].sudo().create(
                         {'backend_id': backend.id,
@@ -71,7 +71,7 @@ class CalendarEvent(models.Model):
             no_mail = True
         new_event = super(CalendarEvent, self.with_context(
             no_mail_to_attendees=no_mail)).create(values)
-        if not self.env.context.get('job_uuid'):
+        if not self.env.context.get('connector_no_export'):
             new_event.try_autobind(new_event.user_id,
                                    new_event.user_id.default_backend)
         return new_event

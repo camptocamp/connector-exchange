@@ -48,6 +48,7 @@ def get_exchange_month_from_date(month):
 
 
 def convert_to_exchange(date, time=False, rec=False, add_day=False):
+
     fmt = DEFAULT_SERVER_DATE_FORMAT
     if time:
         fmt = DEFAULT_SERVER_DATETIME_FORMAT
@@ -121,18 +122,18 @@ class CalendarEventExporter(ExchangeExporter):
         if self.binding.allday:
             calendar.is_all_day_event.set(True)
             calendar.start.set(convert_to_exchange(
-                self.binding.start, time=True)
+                self.binding.start_date)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding.stop, time=True, add_day=True)
+                self.binding.stop_date)
             )
         else:
             calendar.is_all_day_event.set(False)
             calendar.start.set(convert_to_exchange(
-                self.binding.start_datetime, time=True)
+                self.binding.start, time=True)
             )
             calendar.end.set(convert_to_exchange(
-                self.binding.stop_datetime, time=True)
+                self.binding.stop, time=True)
             )
 
     def _attendee_already_exists(self, attendee_email, calendar):
