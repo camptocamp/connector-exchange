@@ -8,6 +8,9 @@
                 <field name="description" position="attributes">
                     <attribute name="widget">html</attribute>
                 </field>
+				<field name="location" position="after">
+					<field name="send_calendar_invitations"/>
+				</field>
                 <notebook position="inside">
                     <page string="Exchange" groups="connector.group_connector_manager">
                         <page name="connector" position="inside">

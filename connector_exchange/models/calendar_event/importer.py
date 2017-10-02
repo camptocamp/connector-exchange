@@ -297,9 +297,6 @@ class CalendarEventImporter(ExchangeImporter):
         event_id = self.external_id
         adapter = self.backend_adapter
         ews = adapter.ews
-        user = self.openerp_user
-        _logger.error("**************** USER: %s %s", user.login, user.name)
-        adapter.set_primary_smtp_address(user)
 
         # contact is an pyews.ews.contact.Contact instance
         event = ews.GetCalendarItems([event_id])[0]
@@ -603,16 +600,14 @@ class CalendarEventImporter(ExchangeImporter):
     def _update(self, binding, data, context_keys=None):
         """ Update an Odoo record """
         context_keys = self._update_context_keys(keys=context_keys)
-        if self.openerp_user.send_calendar_invitations:
-            context_keys.update(no_mail_to_attendees=True)
+        context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._update(
             binding, data, context_keys=context_keys
         )
 
     def _create(self, data, context_keys=None):
         context_keys = self._create_context_keys(keys=context_keys)
-        if self.openerp_user.send_calendar_invitations:
-            context_keys.update(no_mail_to_attendees=True)
+        context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._create(
             data, context_keys=context_keys
         )

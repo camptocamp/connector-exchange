@@ -35,6 +35,8 @@ class CalendarEvent(models.Model):
         inverse_name='openerp_id',
         string="Exchange Bindings",
     )
+    send_calendar_invitations = fields.Boolean('Send invitations on my behalf',
+                                               default=False)
 
     @api.multi
     def try_autobind(self, user, backend):
@@ -67,7 +69,8 @@ class CalendarEvent(models.Model):
         if not user:
             user = self.env.user.id
         no_mail = False
-        if self.env['res.users'].browse(user).send_calendar_invitations:
+        if (values.get('send_calendar_invitations') and
+                values['send_calendar_invitations']):
             no_mail = True
         new_event = super(CalendarEvent, self.with_context(
             no_mail_to_attendees=no_mail)).create(values)
@@ -85,7 +88,7 @@ class CalendarEvent(models.Model):
             if not user:
                 user = rec.user_id.id
             no_mail = False
-            if self.env['res.users'].browse(user).send_calendar_invitations:
+            if rec.send_calendar_invitations:
                 no_mail = True
             super(CalendarEvent, rec.sudo().with_context(
                 no_mail_to_attendees=no_mail)).write(values)

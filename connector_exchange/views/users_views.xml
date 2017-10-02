@@ -11,7 +11,6 @@
                             <field name="default_backend" widget="selection"/>
                             <field name="exchange_synch"/>
                             <field name="exchange_calendar_sync"/>
-                            <field name="send_calendar_invitations" attrs="{'invisible': [('exchange_calendar_sync', '=', False)]}"/>
 
                             <label for="backend_folder_ids"  attrs="{'invisible':[('exchange_synch','=',False), ('exchange_calendar_sync','=',False)]}" />
                             <field name="backend_folder_ids" attrs="{'invisible':[('exchange_synch','=',False), ('exchange_calendar_sync','=',False)]}" nolabel="1">

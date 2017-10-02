@@ -13,16 +13,16 @@ from ...backend import exchange_2010
 class EventBackendAdapter(ExchangeAdapter):
     _model_name = ['exchange.calendar.event']
 
-    def create(self, folder, exchange_obj, user):
+    def create(self, folder, exchange_obj, send_calendar_invitations):
         invit = "SendToNone"
-        if user.send_calendar_invitations:
+        if send_calendar_invitations:
             invit = "SendToAllAndSaveCopy"
         return self.ews.CreateCalendarItem(folder, exchange_obj,
                                            send_meeting_invitations=invit)
 
-    def write(self, external_id, exchange_obj, user):
+    def write(self, external_id, exchange_obj, send_calendar_invitations):
         invit = "SendToNone"
-        if user.send_calendar_invitations:
+        if send_calendar_invitations:
             invit = "SendToChangedAndSaveCopy"
         return self.ews.UpdateCalendarItems([exchange_obj],
                                             send_meeting_invitations=invit)
