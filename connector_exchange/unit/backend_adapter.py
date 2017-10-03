@@ -4,12 +4,16 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from pyews.pyews import WebCredentials, ExchangeService
-from pyews.soap import SoapClient
-
 from odoo.addons.connector.unit.backend_adapter import BackendAdapter
 
+
 _logger = logging.getLogger(__name__)
+
+try:
+    from pyews.pyews import WebCredentials, ExchangeService
+    from pyews.soap import SoapClient
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ExchangeLocation(WebCredentials):

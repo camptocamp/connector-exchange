@@ -2,11 +2,18 @@
 # Author: Damien Crier
 # Copyright 2016 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-
-from pyews.ews.data import FolderClass, DistinguishedFolderId
-from pyews.ews.folder import Folder
+import logging
 from ...unit.backend_adapter import ExchangeAdapter
 from ...backend import exchange_2010
+
+
+_logger = logging.getLogger(__name__)
+
+try:
+    from pyews.ews.data import FolderClass, DistinguishedFolderId
+    from pyews.ews.folder import Folder
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 @exchange_2010

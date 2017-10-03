@@ -5,11 +5,6 @@
 
 
 import logging
-from contextlib import contextmanager
-
-from pyews.ews.data import FolderClass, SensitivityType, DistinguishedFolderId
-from pyews.ews.folder import Folder
-
 from odoo import models, fields, api
 
 from odoo.addons.connector.connector import ConnectorEnvironment
@@ -17,7 +12,18 @@ from odoo.addons.connector.connector import ConnectorEnvironment
 from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
 
+
 _logger = logging.getLogger(__name__)
+
+try:
+    from contextlib import contextmanager
+    from pyews.ews.data import (FolderClass,
+                                SensitivityType,
+                                DistinguishedFolderId
+                                )
+    from pyews.ews.folder import Folder
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ExchangeBackend(models.Model):

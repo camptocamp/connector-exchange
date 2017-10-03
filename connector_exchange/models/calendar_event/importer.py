@@ -5,22 +5,28 @@
 
 import base64
 import logging
+
+
 import pytz
 import datetime
 from dateutil import parser
-from pyews.ews.data import (SensitivityType,
-                            LegacyFreeBusyStatusType,
-                            DayOfWeekIndexType,
-                            ResponseTypeType,
-                            )
-
-from odoo import fields
 from ...backend import exchange_2010
+from odoo import fields
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
 
+
 _logger = logging.getLogger(__name__)
+try:
+    from pyews.ews.data import (SensitivityType,
+                                LegacyFreeBusyStatusType,
+                                DayOfWeekIndexType,
+                                ResponseTypeType,
+                                )
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'

@@ -4,14 +4,16 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-
-from pyews.pyews import ExchangeService
-from pyews.soap import SoapClient
-from pyews.ews.data import WellKnownFolderName
-
 from odoo import models, fields, api, _
 
+
 _logger = logging.getLogger(__name__)
+try:
+    from pyews.pyews import ExchangeService
+    from pyews.soap import SoapClient
+    from pyews.ews.data import WellKnownFolderName
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ResCompany(models.Model):

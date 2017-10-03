@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 # Copyright 2016-2017 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
-
-from pyews.ews.data import FolderClass
+import logging
 from odoo import _
 from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.backend_adapter import ExchangeAdapter
 from ...backend import exchange_2010
+
+
+_logger = logging.getLogger(__name__)
+try:
+    from pyews.ews.data import FolderClass
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 @exchange_2010

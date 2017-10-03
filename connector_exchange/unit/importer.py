@@ -16,11 +16,6 @@ are already bound, to update the last sync date.
 """
 
 import logging
-
-from pyews.ews.data import FolderClass
-
-from contextlib import closing, contextmanager
-
 import odoo
 from odoo import SUPERUSER_ID
 from odoo.addons.connector.connector import ConnectorUnit
@@ -31,6 +26,13 @@ from odoo import _
 from ..backend import exchange_2010
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from pyews.ews.data import FolderClass
+    from contextlib import closing, contextmanager
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 RETRY_ON_ADVISORY_LOCK = 1  # seconds
 RETRY_WHEN_CONCURRENT_DETECTED = 1  # seconds

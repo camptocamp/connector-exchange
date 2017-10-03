@@ -5,15 +5,6 @@
 
 import logging
 import datetime
-from pyews.ews.calendar import CalendarItem, Attendee
-from pyews.ews.data import (SensitivityType,
-                            LegacyFreeBusyStatusType,
-                            DaysOfWeekBaseType,
-                            DayOfWeekIndexType,
-                            MonthRecurrenceType,
-                            ResponseTypeType,
-                            )
-
 from odoo import _, fields
 from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
                         DEFAULT_SERVER_DATETIME_FORMAT)
@@ -21,7 +12,22 @@ from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
 
+
 _logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
+
+try:
+    from pyews.ews.calendar import CalendarItem, Attendee
+    from pyews.ews.data import (SensitivityType,
+                                LegacyFreeBusyStatusType,
+                                DaysOfWeekBaseType,
+                                DayOfWeekIndexType,
+                                MonthRecurrenceType,
+                                ResponseTypeType,
+                                )
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
