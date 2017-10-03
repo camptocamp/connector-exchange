@@ -6,8 +6,8 @@
 from odoo import models, fields, api
 from odoo.addons.queue_job.job import job
 
-from unit.exporter import ExchangeExporter, ExchangeDisabler
-from unit.importer import ExchangeImporter
+from .unit.exporter import ExchangeExporter, ExchangeDisabler
+from .unit.importer import ExchangeImporter
 
 
 class ExchangeBinding(models.AbstractModel):

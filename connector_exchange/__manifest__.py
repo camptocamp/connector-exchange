@@ -20,7 +20,7 @@
              'partner_firstname',
              'partner_address_street3',
              ],
- 'external_dependencies': {'python': ['pyews']},
+ 'external_dependencies': {'python': ['pyews', 'vcr', 'contextlib2']},
  'data': ['security/ir.model.access.csv',
           'views/connector_exchange_menu.xml',
           'views/exchange_backend_views.xml',

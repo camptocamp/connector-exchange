@@ -6,3 +6,4 @@
 access_res_users_backend_folder,access_res_users_backend_folder,connector_exchange.model_res_users_backend_folder,,1,1,1,1
 "access_exchange_calendar_user","exchange calendar user","connector_exchange.model_exchange_calendar_event","base.group_user",1,1,1,0
 "access_exchange_calendar_manager","exchange calendar manager","connector_exchange.model_exchange_calendar_event","connector.group_connector_manager",1,1,1,1
+
