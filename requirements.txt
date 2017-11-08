@@ -1,0 +1,3 @@
+git+https://github.com/damdam-s/pyews.git@PyEWS_Events_Management
+vcrpy>=1.10.5
+contextlib2>=0.5.4
