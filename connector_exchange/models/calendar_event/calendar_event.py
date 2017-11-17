@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
 
-from openerp import models, fields, api, _
-from openerp import tools
-from openerp.addons.calendar.calendar import calendar_id2real_id
+from odoo import models, fields, api
+from odoo import tools
+from odoo.addons.calendar.models.calendar import calendar_id2real_id
 _logger = logging.getLogger(__name__)
 
 
@@ -35,6 +35,8 @@ class CalendarEvent(models.Model):
         inverse_name='openerp_id',
         string="Exchange Bindings",
     )
+    send_calendar_invitations = fields.Boolean('Send invitations on my behalf',
+                                               default=False)
 
     @api.multi
     def try_autobind(self, user, backend):
@@ -45,14 +47,14 @@ class CalendarEvent(models.Model):
         real_calendars = (
             list(set([calendar_id2real_id(calendar_id=cal.id) for cal in self])
                  )
-            )
-        if self.env.context.get('job_uuid', False):
+        )
+        if self.env.context.get('connector_no_export', False):
             return True
         else:
             for calendar in self.browse(real_calendars):
                 bindings = calendar.exchange_bind_ids.filtered(
                     lambda a: a.backend_id == backend and a.user_id == user and
-                    a['class'] != 'private')
+                    a['privacy'] != 'private')
                 if not bindings:
                     self.env['exchange.calendar.event'].sudo().create(
                         {'backend_id': backend.id,
@@ -67,11 +69,12 @@ class CalendarEvent(models.Model):
         if not user:
             user = self.env.user.id
         no_mail = False
-        if self.env['res.users'].browse(user).send_calendar_invitations:
+        if (values.get('send_calendar_invitations') and
+                values['send_calendar_invitations']):
             no_mail = True
         new_event = super(CalendarEvent, self.with_context(
             no_mail_to_attendees=no_mail)).create(values)
-        if not self.env.context.get('job_uuid'):
+        if not self.env.context.get('connector_no_export'):
             new_event.try_autobind(new_event.user_id,
                                    new_event.user_id.default_backend)
         return new_event
@@ -80,13 +83,12 @@ class CalendarEvent(models.Model):
     def write(self, values):
         """Overload write method to trigger connector events"""
         # FIXME: manage alteration of recurrent events
-        # session = ConnectorSession.from_env(self.env)
         for rec in self:
             user = values.get('user_id')
             if not user:
                 user = rec.user_id.id
             no_mail = False
-            if self.env['res.users'].browse(user).send_calendar_invitations:
+            if rec.send_calendar_invitations:
                 no_mail = True
             super(CalendarEvent, rec.sudo().with_context(
                 no_mail_to_attendees=no_mail)).write(values)
@@ -104,8 +106,6 @@ class CalendarEvent(models.Model):
                         self.browse(real_id).with_context(
                             connector_no_export=True,
                             no_mail_to_attendees=no_mail).unlink()
-                        # delay_disable_all_bindings(session, self._name,
-                        # real_id)
 
             else:
                 # we are dealing with a real event
@@ -120,120 +120,80 @@ class CalendarEvent(models.Model):
                     pass
         return True
 
-    @api.v7
-    def already_exists(self, cr, uid, id, values, context=None):
+    @api.multi
+    def already_exists(self, values):
         res = False
-        for attendee in self.browse(cr, uid, id, context=context).attendee_ids:
+        for attendee in self.attendee_ids:
             if attendee.email == values.get('email'):
-                res = attendee.id
+                res = attendee
                 break
         return res
 
-    @api.v7
-    def create_attendees(self, cr, uid, ids, context=None):
-        # fully rewritten and old API ... FIXME
-        if context is None:
-            context = {}
-        user_obj = self.pool['res.users']
-        current_user = user_obj.browse(cr, uid, uid, context=context)
-        res = {}
-        attendee_obj = self.pool['calendar.attendee']
-        for event in self.browse(cr, uid, ids, context):
-            attendees = {}
-            for att in event.attendee_ids:
-                attendees[att.partner_id.id] = True
-            new_attendees = []
-            new_att_partner_ids = []
-            for partner in event.partner_ids:
-                if partner.id in attendees:
-                    continue
-                access_token = self.new_invitation_token(cr, uid, event,
-                                                         partner.id)
+    @api.multi
+    def create_attendees(self):
+
+        current_user = self.env.user
+        result = {}
+        for meeting in self:
+            already_meeting_partners = meeting.attendee_ids.mapped(
+                'partner_id')
+            meeting_attendees = self.env['calendar.attendee']
+            meeting_partners = self.env['res.partner']
+            for partner in meeting.partner_ids.filtered(
+                    lambda partner: partner not in already_meeting_partners):
                 values = {
                     'partner_id': partner.id,
-                    'event_id': event.id,
-                    'access_token': access_token,
                     'email': partner.email,
+                    'event_id': meeting.id,
                 }
 
-                if partner.id == current_user.partner_id.id:
+                # current user don't have to accept his own meeting
+                if partner == self.env.user.partner_id:
                     values['state'] = 'accepted'
 
-                existing_att = self.already_exists(cr, uid, event.id, values)
+                existing_att = meeting.already_exists(values)
                 if existing_att:
-                    self.pool['calendar.attendee'].write(cr, uid,
-                                                         [existing_att],
-                                                         values,
-                                                         context=context)
-                    att_id = existing_att
+                    existing_att.write(values)
+                    attendee = existing_att
                 else:
-                    att_id = self.pool['calendar.attendee'].create(
-                        cr, uid,
-                        values,
-                        context=context)
-                    new_attendees.append(att_id)
-                    new_att_partner_ids.append(partner.id)
+                    attendee = self.env['calendar.attendee'].create(values)
 
-                if (not current_user.email or
-                        current_user.email != partner.email):
-                    mail_from = (
-                        current_user.email or
-                        tools.config.get('email_from', False)
-                    )
-                    if not context.get('no_email'):
-                        if attendee_obj._send_mail_to_attendees(
-                                cr, uid,
-                                att_id,
-                                email_from=mail_from,
-                                context=context):
-                            self.message_post(
-                                cr, uid, event.id,
-                                body=_("An invitation email has been sent to "
-                                       "attendee %s") % (partner.name,),
-                                subtype="calendar.subtype_invitation",
-                                context=context)
+                meeting_attendees |= attendee
+                meeting_partners |= partner
 
-            if new_attendees:
-                self.write(
-                    cr, uid, [event.id],
-                    {'attendee_ids': [(4, att) for att in new_attendees]},
-                    context=context)
-            if new_att_partner_ids:
-                self.message_subscribe(cr, uid, [event.id],
-                                       new_att_partner_ids, context=context)
+            if meeting_attendees:
+                to_notify = meeting_attendees.filtered(
+                    lambda a: a.email != current_user.email)
+                to_notify._send_mail_to_attendees(
+                    'calendar.calendar_template_meeting_invitation')
+
+                meeting.write({'attendee_ids': [(4, meeting_attendee.id) for
+                                                meeting_attendee in
+                                                meeting_attendees]})
+            if meeting_partners:
+                meeting.message_subscribe(partner_ids=meeting_partners.ids)
 
             # We remove old attendees who are not in partner_ids now.
-            all_partner_ids = [part.id for part in event.partner_ids]
-            all_part_attendee_ids = (
-                [att.partner_id.id for att in event.attendee_ids]
-            )
-            all_attendee_ids = [att.id for att in event.attendee_ids]
-            partner_ids_to_remove = map(
-                lambda x: x,
-                set(all_part_attendee_ids +
-                    new_att_partner_ids) - set(all_partner_ids)
-            )
+            all_partners = meeting.partner_ids
+            all_partner_attendees = meeting.attendee_ids.mapped('partner_id')
+            old_attendees = meeting.attendee_ids
+            partners_to_remove = (
+                all_partner_attendees + meeting_partners - all_partners)
 
-            attendee_ids_to_remove = []
+            attendees_to_remove = self.env["calendar.attendee"]
+            if partners_to_remove:
+                attendees_to_remove = self.env["calendar.attendee"].search(
+                    [('partner_id', 'in', partners_to_remove.ids),
+                     ('event_id', '=', meeting.id)])
+                attendees_to_remove.unlink()
 
-            if partner_ids_to_remove:
-                attendee_ids_to_remove = attendee_obj.search(
-                    cr, uid,
-                    [('partner_id.id', 'in', partner_ids_to_remove),
-                     ('event_id.id', '=', event.id)],
-                    context=context
-                )
-                if attendee_ids_to_remove:
-                    self.pool['calendar.attendee'].unlink(
-                        cr, uid, attendee_ids_to_remove, context
-                    )
-
-            res[event.id] = {
-                'new_attendee_ids': new_attendees,
-                'old_attendee_ids': all_attendee_ids,
-                'removed_attendee_ids': attendee_ids_to_remove
+            result[meeting.id] = {
+                'new_attendees': meeting_attendees,
+                'old_attendees': old_attendees,
+                'removed_attendees': attendees_to_remove,
+                'removed_partners': partners_to_remove
             }
-        return res
+        return result
 
 
 class ExchangeCalendarEvent(models.Model):

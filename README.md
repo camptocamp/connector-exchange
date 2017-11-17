@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/camptocamp/connector-exchange.svg?branch=10.0)](https://travis-ci.org/camptocamp/connector-exchange)
+[![Build Status](https://travis-ci.com/camptocamp/connector-exchange.svg?branch=10.0)](https://travis-ci.com/camptocamp/connector-exchange)
 
 Odoo Connector Exchange Modules
 ===============================

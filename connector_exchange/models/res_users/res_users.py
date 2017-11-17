@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
+from odoo import models, fields, api, _
 
-from pyews.pyews import ExchangeService
-from pyews.soap import SoapClient
-from pyews.ews.data import WellKnownFolderName
-
-from openerp import models, fields, api, _
 
 _logger = logging.getLogger(__name__)
+try:
+    from pyews.pyews import ExchangeService
+    from pyews.soap import SoapClient
+    from pyews.ews.data import WellKnownFolderName
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ResCompany(models.Model):
@@ -59,8 +61,6 @@ class ResUsers(models.Model):
                                     default=False)
     exchange_calendar_sync = fields.Boolean('Synch Calendars with Exchange',
                                             default=False)
-    send_calendar_invitations = fields.Boolean('Send invitations on my behalf',
-                                               default=False)
     exchange_contact_ids = fields.Many2many(
         comodel_name='res.partner',
         string='Exchange partners',
@@ -86,9 +86,9 @@ class ResUsers(models.Model):
         If it already exists, do nothing
         """
         # find exchange backend
-        ex_backends = self.env['exchange.backend'].search([])
+        ex_backends = self.default_backend
         if ex_backends:
-            back = ex_backends[0]
+            back = ex_backends
             ews = ExchangeService()
             ews.soap = SoapClient(back.location,
                                   back.username,

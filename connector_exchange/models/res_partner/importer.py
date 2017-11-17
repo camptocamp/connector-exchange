@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 import logging
-
-from pyews.ews.data import (EmailKey,
-                            PhoneKey,
-                            PhysicalAddressType
-                            )
-from openerp.addons.connector.exception import FailedJobError
-from openerp import _
+from odoo.addons.queue_job.exception import FailedJobError
+from odoo import _
 from ...backend import exchange_2010
 from ...unit.importer import ExchangeImporter
 from .exporter import EXCHANGE_STREET_SEPARATOR
+
+
 _logger = logging.getLogger(__name__)
+
+try:
+    from pyews.ews.data import (EmailKey,
+                                PhoneKey,
+                                PhysicalAddressType
+                                )
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 SIMPLE_VALUE_FIELDS = {'complete_name': {'given_name': 'firstname',

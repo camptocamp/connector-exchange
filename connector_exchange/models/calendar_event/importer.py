@@ -1,26 +1,32 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
 import logging
+
+
 import pytz
 import datetime
 from dateutil import parser
-from pyews.ews.data import (SensitivityType,
-                            LegacyFreeBusyStatusType,
-                            DayOfWeekIndexType,
-                            ResponseTypeType,
-                            )
-
-from openerp import fields
 from ...backend import exchange_2010
+from odoo import fields
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
 
+
 _logger = logging.getLogger(__name__)
+try:
+    from pyews.ews.data import (SensitivityType,
+                                LegacyFreeBusyStatusType,
+                                DayOfWeekIndexType,
+                                ResponseTypeType,
+                                )
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
@@ -61,27 +67,27 @@ class CalendarEventImporter(ExchangeImporter):
         if event_instance.is_all_day_event.value:
             # fill start_date and stop_date
             vals['allday'] = True
-            vals['start_date'] = transform_to_odoo_date(
+            vals['start'] = transform_to_odoo_date(
                 event_instance.start.value, user_tz, time=False)
-            vals['stop_date'] = transform_to_odoo_date(
+            vals['stop'] = transform_to_odoo_date(
                 event_instance.end.value, user_tz, time=False, end=True)
         else:
             # fill start_datetime and stop_datetime
             vals['allday'] = False
-            vals['start_datetime'] = transform_to_odoo_date(
+            vals['start'] = transform_to_odoo_date(
                 event_instance.start.value, user_tz, time=True)
-            vals['stop_datetime'] = transform_to_odoo_date(
+            vals['stop'] = transform_to_odoo_date(
                 event_instance.end.value, user_tz, time=True)
         return vals
 
     def fill_privacy(self, event_instance):
         vals = {}
         if event_instance.sensitivity.value == SensitivityType.Normal:
-            vals['class'] = 'public'
+            vals['privacy'] = 'public'
         elif event_instance.sensitivity.value == SensitivityType.Confidential:
-            vals['class'] = 'confidential'
+            vals['privacy'] = 'confidential'
         else:
-            vals['class'] = 'private'
+            vals['privacy'] = 'private'
 
         return vals
 
@@ -297,9 +303,6 @@ class CalendarEventImporter(ExchangeImporter):
         event_id = self.external_id
         adapter = self.backend_adapter
         ews = adapter.ews
-        user = self.openerp_user
-        _logger.error("**************** USER: %s %s", user.login, user.name)
-        adapter.set_primary_smtp_address(user)
 
         # contact is an pyews.ews.contact.Contact instance
         event = ews.GetCalendarItems([event_id])[0]
@@ -549,7 +552,7 @@ class CalendarEventImporter(ExchangeImporter):
 
         :param item_id: item_id
         """
-        self.openerp_user = self.env['res.users'].browse(user_id)
+        self.openerp_user = user_id
         self.external_id = item_id
         lock_name = 'import({}, {}, {}, {})'.format(
             self.backend_record._name,
@@ -577,6 +580,7 @@ class CalendarEventImporter(ExchangeImporter):
         event_id = self.external_id
 
         backend = self.backend_record
+
         args = [('backend_id', '=', backend.id),
                 ('user_id', '=', self.openerp_user.id),
                 ('external_id', '=', event_id)]
@@ -588,10 +592,8 @@ class CalendarEventImporter(ExchangeImporter):
 
         if not exchange_events:
             _logger.debug('does not exist --> CREATE')
-            binding = exchange_events._create(data)
-            exchange_events.browse(binding).openerp_id.user_id = (
-                self.openerp_user.id
-            )
+            binding = self._create(data)
+            binding.openerp_id.user_id = self.openerp_user.id
         else:
             _logger.debug('exists --> UPDATE')
             binding = exchange_events[0]
@@ -604,16 +606,14 @@ class CalendarEventImporter(ExchangeImporter):
     def _update(self, binding, data, context_keys=None):
         """ Update an Odoo record """
         context_keys = self._update_context_keys(keys=context_keys)
-        if self.openerp_user.send_calendar_invitations:
-            context_keys.update(no_mail_to_attendees=True)
+        context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._update(
             binding, data, context_keys=context_keys
         )
 
     def _create(self, data, context_keys=None):
         context_keys = self._create_context_keys(keys=context_keys)
-        if self.openerp_user.send_calendar_invitations:
-            context_keys.update(no_mail_to_attendees=True)
+        context_keys.update(no_mail_to_attendees=True)
         return super(CalendarEventImporter, self)._create(
             data, context_keys=context_keys
         )

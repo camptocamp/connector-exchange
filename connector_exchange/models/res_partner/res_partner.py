@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # Author: Damien Crier
-# Copyright 2016 Camptocamp SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# Copyright 2016-2017 Camptocamp SA
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 
 import logging
 
-from openerp import models, fields, api
+from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
 
@@ -19,12 +19,10 @@ class ResPartner(models.Model):
         string="Exchange Bindings",
     )
 
-    def _set_calendar_last_notif_ack(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        context.update(connector_no_export=True)
-        super(ResPartner, self)._set_calendar_last_notif_ack(
-            cr, uid, context=context)
+    @api.model
+    def _set_calendar_last_notif_ack(self):
+        super(ResPartner, self).with_context(
+            connector_no_export=True)._set_calendar_last_notif_ack()
         return
 
     @api.multi
