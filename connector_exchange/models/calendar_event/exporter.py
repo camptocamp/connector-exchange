@@ -341,7 +341,7 @@ class CalendarEventExporter(ExchangeExporter):
         self.fill_calendar_event(calendar, fields)
         calendar.categories.add('Odoo')
 
-        if self.binding_record.send_calendar_invitations:
+        if self.binding.send_calendar_invitations:
             calendar.is_draft = True
         return calendar
 
@@ -355,7 +355,7 @@ class CalendarEventExporter(ExchangeExporter):
         # add Odoo category on create calendar on exchange
         calendar.categories.add('Odoo')
 
-        if self.binding_record.send_calendar_invitations:
+        if self.binding.send_calendar_invitations:
             calendar.is_draft = True
 
         return calendar, parent_folder_id
@@ -367,7 +367,7 @@ class CalendarEventExporter(ExchangeExporter):
         return self.backend_adapter.write(
             self.external_id,
             record,
-            self.binding_record.send_calendar_invitations)
+            self.binding.send_calendar_invitations)
 
     def _create(self, folder, record):
         """ Create the Exchange record """
@@ -375,7 +375,7 @@ class CalendarEventExporter(ExchangeExporter):
         self._validate_create_data(record)
         return self.backend_adapter.create(
             folder, record,
-            self.binding_record.send_calendar_invitations)
+            self.binding.send_calendar_invitations)
 
     def get_exchange_record(self):
         return self.backend_adapter.ews.GetCalendarItems(
