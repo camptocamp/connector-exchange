@@ -28,7 +28,6 @@ Here is a quick video to show you the features provided by this connector:
 
 ## How it works?
 
-* [Activate connector by user](./how_to/activate.md)
 * [Importing contacts](./how_to/import_contacts.md)
 * [Importing calendar events](./how_to/import_calendar_events.md)
 * [Exporting contacts](./how_to/export_contacts.md)
