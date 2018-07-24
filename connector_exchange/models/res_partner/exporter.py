@@ -139,7 +139,6 @@ class PartnerExporter(ExchangeExporter):
                 exchange_field.add(v['type'], odoo_value)
 
         if set(ADDRESS_FIELDS) & set(fields):
-            # import pdb; pdb.set_trace()
             not_found = True
             if contact.physical_addresses:
                 for atype in contact.physical_addresses.entries:
