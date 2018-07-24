@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data >
+    <record model="res.company" id="base.main_company">
+        <field name="exchange_suffix">@dummy.com</field>
+    </record>
+  </data>
+</openerp>
