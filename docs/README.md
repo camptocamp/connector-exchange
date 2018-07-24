@@ -8,7 +8,7 @@ Odoo Exchange Connector is a bi-directional connector, 100% compatible with Odoo
 
 Using this connector, you will be able to synchronize your contacts and your calendar events.
 
-Unlike other connectors existing to sync Odoo and Exchange, this connector makes a server to server connection. Nothing to setup in Outlook or other tools. Once configured, it works seemlessly to either import contact/calendar events created in Exchange or export contacts/calendar events created in Odoo.
+Unlike other connectors existing to sync Odoo and Exchange, this connector makes a server to server connection. Nothing to setup in Outlook or other tools. Once configured, it works seamlessly to either import contact/calendar events created in Exchange or export contacts/calendar events created in Odoo.
 
 Moreover, this connector does not use paid third-party library to connect and interact with Microsoft Exchange.
 

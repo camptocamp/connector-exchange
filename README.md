@@ -8,8 +8,7 @@ Odoo Connector Exchange Modules
 This connector is based on the [OpenERP Connector framework](https://github.com/OCA/connector) and the [PyEWS library](https://github.com/camptocamp/PyEWS).
 
 
-Documentation:
-To add
+[Documentation](./docs/README.md)
 
 Translation Status
 ------------------

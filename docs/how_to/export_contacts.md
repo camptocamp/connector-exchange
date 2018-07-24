@@ -17,6 +17,6 @@ Each user have to *bind* themselves on the contacts/customers he wants. This cho
 
 Logged as a user for whom contacts sync is enabled, simply go on the customers/contacts and create a contact.
 
-On the customer form, the user has to binf manually this contact to exchange. The process to *bind* is showed in the following screencast.
+On the customer form, the user has to bind manually this contact to exchange. The process to *bind* is showed in the following screencast.
 
 ![contact export](./images/exchange_export_contact.gif) 
