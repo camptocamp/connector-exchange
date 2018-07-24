@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data noupdate="1">
+    <record model="exchange.backend" id="exchange_demo_backend">
+        <field name="name">TEST Exchange Backend</field>
+        <field name="version">exchange_2010</field>
+        <field name="location">dummy</field>
+        <field name="username">dummy</field>
+        <field name="password">dummy</field>
+    </record>
+  </data>
+</openerp>
+

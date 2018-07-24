@@ -129,7 +129,7 @@ class ExchangeBackend(models.Model):
                     continue
 
                 exchange_contacts = adapter.ews.FindItems(exchange_folder,
-                                                          ids_only=True)
+                                                          ids_only=False)
                 # for each contact found, run import_record
                 for exchange_contact in exchange_contacts:
                     odoo_categ = False
