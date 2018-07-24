@@ -30,7 +30,6 @@
           'views/res_company_view.xml',
           'views/userbackendfolder_views.xml',
           'data/cron.xml',
-          'data/company_data.xml',
           'data/generic_partner.xml',
           'data/changeset_field_rule.xml',
           ],
