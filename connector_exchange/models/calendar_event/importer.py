@@ -302,10 +302,11 @@ class CalendarEventImporter(ExchangeImporter):
         """
         event_id = self.external_id
         adapter = self.backend_adapter
+        adapter.set_primary_smtp_address(self.openerp_user)
         ews = adapter.ews
 
         # contact is an pyews.ews.contact.Contact instance
-        event = ews.GetCalendarItems([event_id])[0]
+        event = ews.GetCalendarItems([event_id], )[0]
 
         vals = self.map_exchange_instance(event)
 

@@ -76,7 +76,6 @@ class ResUsers(models.Model):
     backend_folder_ids = fields.One2many('res.users.backend.folder', 'user_id',
                                          string="Folders")
     default_backend = fields.Many2one(comodel_name='exchange.backend',
-                                      required=True,
                                       default=_get_default_backend)
 
     @api.onchange('exchange_synch', 'exchange_calendar_sync')
