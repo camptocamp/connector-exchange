@@ -165,8 +165,6 @@ class ExchangeBackend(models.Model):
         for backend in self:
             for user in users:
                 start_date = user.last_calendar_sync_date
-                import pdb
-                pdb.set_trace()
                 exchange_start_date = '%sT00:00:00Z' % start_date
 
                 user.create_odoo_category()
