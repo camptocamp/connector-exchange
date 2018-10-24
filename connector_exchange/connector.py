@@ -104,4 +104,4 @@ class ExchangeBinding(models.AbstractModel):
         self.ensure_one()
         with user.default_backend.get_environment(self._name) as connector_env:
             deleter = connector_env.get_connector_unit(ExchangeDisabler)
-            return deleter.run(external_id, user)
+            return deleter.run(external_id, user.id)

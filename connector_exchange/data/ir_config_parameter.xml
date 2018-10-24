@@ -2,7 +2,7 @@
 <openerp>
   <data noupdate="1">
 
-    <record model="ir.config.parameter" id="exchange_calendar_sync_past_offset">
+    <record model="ir.config_parameter" id="exchange_calendar_sync_past_offset">
       <field name="key">exchange_calendar_sync_past_offset</field>
       <field name="value">60</field>
     </record>
