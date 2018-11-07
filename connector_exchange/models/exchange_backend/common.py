@@ -164,6 +164,9 @@ class ExchangeBackend(models.Model):
 
         for backend in self:
             for user in users:
+                start_date = user.last_calendar_sync_date
+                exchange_start_date = '%sT00:00:00Z' % start_date
+
                 user.create_odoo_category()
                 imported_events = []
                 existing_events = user.exchange_calendar_ids.mapped(
@@ -202,8 +205,10 @@ class ExchangeBackend(models.Model):
                 if not exchange_folder:
                     continue
 
-                exchange_events = adapter.ews.FindCalendarItems(
+                # ADD a start_date.
+                exchange_events = adapter.ews.FindCalendarItemsByDate(
                     exchange_folder,
+                    start=exchange_start_date,
                     ids_only=False)
                 # for each event found, run import_record if sensitivity
                 # is not "Private" or "Personnal"
@@ -234,6 +239,7 @@ class ExchangeBackend(models.Model):
                 calendar_event_ids = to_delete_ids.mapped('openerp_id')
                 calendar_event_ids.with_context(
                     connector_no_export=True).unlink()
+                user.last_calendar_sync_date = fields.Date.today()
         return True
 
     @api.multi

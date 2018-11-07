@@ -238,9 +238,9 @@ class ExchangeImporter(Importer):
                         connector_env=self.connector_env
                     )
                     yield connector_env
-                except:
+                except Exception as exp:
                     cr.rollback()
-                    raise
+                    raise exp
                 else:
                     cr.commit()
 

@@ -4,6 +4,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
+from datetime import timedelta
 from odoo import models, fields, api, _
 
 
@@ -53,6 +54,21 @@ class ResUsers(models.Model):
     _inherit = 'res.users'
 
     @api.model
+    def _get_last_calendar_sync_date(self):
+        today = fields.Date.from_string(fields.Date.today())
+        days_offset_str = self.env['ir.config_parameter'].get_param(
+            'exchange_calendar_sync_past_offset', '30')
+        try:
+            days_offset = int(days_offset_str)
+        except ValueError as err:
+            _logger.warning(err.message)
+            _logger.warning('Cannot convert %s to integer. Using 30',
+                            days_offset_str)
+            days_offset = 30
+        last_calendar_sync_date = today - timedelta(days=days_offset)
+        return fields.Date.to_string(last_calendar_sync_date)
+
+    @api.model
     @api.returns('exchange.backend')
     def _get_default_backend(self):
         return self.env['exchange.backend'].search([], limit=1)
@@ -77,6 +93,9 @@ class ResUsers(models.Model):
                                          string="Folders")
     default_backend = fields.Many2one(comodel_name='exchange.backend',
                                       default=_get_default_backend)
+    last_calendar_sync_date = fields.Date(
+        default=_get_last_calendar_sync_date
+    )
 
     @api.onchange('exchange_synch', 'exchange_calendar_sync')
     def create_odoo_category(self):

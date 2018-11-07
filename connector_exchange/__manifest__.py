@@ -32,6 +32,7 @@
           'data/cron.xml',
           'data/generic_partner.xml',
           'data/changeset_field_rule.xml',
+          'data/ir_config_parameter.xml',
           ],
  'demo': [
      'demo/backend.xml',
