@@ -5,6 +5,7 @@
 
 
 import logging
+from datetime import datetime, timedelta
 from odoo import models, fields, api
 
 from odoo.addons.connector.connector import ConnectorEnvironment
@@ -161,11 +162,15 @@ class ExchangeBackend(models.Model):
         _logger.debug('import events')
         users = self.env['res.users'].search(
             [('exchange_calendar_sync', '=', True)])
-
         for backend in self:
             for user in users:
                 start_date = user.last_calendar_sync_date
                 exchange_start_date = '%sT00:00:00Z' % start_date
+                max_horizon = self.env['ir.config_parameter'].get_param(
+                    'exchange_calendar_sync_max_horizon', '365')
+                max_date = datetime.now() + timedelta(days=int(max_horizon))
+                exchange_max_date = '%sT00:00:00Z' % fields.Date.to_string(
+                    max_date)
 
                 user.create_odoo_category()
                 imported_events = []
@@ -209,6 +214,7 @@ class ExchangeBackend(models.Model):
                 exchange_events = adapter.ews.FindCalendarItemsByDate(
                     exchange_folder,
                     start=exchange_start_date,
+                    end=exchange_max_date,
                     ids_only=False)
                 # for each event found, run import_record if sensitivity
                 # is not "Private" or "Personnal"
