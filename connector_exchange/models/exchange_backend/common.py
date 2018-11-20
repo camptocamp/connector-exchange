@@ -218,17 +218,22 @@ class ExchangeBackend(models.Model):
                     ids_only=False)
                 # for each event found, run import_record if sensitivity
                 # is not "Private" or "Personnal"
-                # and if categories contains Odoo
                 for exchange_event in exchange_events:
+                    # Do not import events without Odoo category if the user
+                    # has import_only_odoo_calendar_events=True
+                    if user.import_only_odoo_calendar_events:
+                        odoo_categ = False
+                        for categ in exchange_event.categories.entries:
+                            if categ.value == 'Odoo':
+                                odoo_categ = True
+                                break
+                        if not odoo_categ:
+                            continue
                     sensitivity = exchange_event.sensitivity
-                    odoo_categ = False
-                    for categ in exchange_event.categories.entries:
-                        if categ.value == 'Odoo':
-                            odoo_categ = True
-                            break
-                    if (odoo_categ and
-                            sensitivity.value != SensitivityType.Private and
-                            sensitivity.value != SensitivityType.Personal):
+                    if (
+                        sensitivity.value != SensitivityType.Private and
+                        sensitivity.value != SensitivityType.Personal
+                    ):
                         self.env['exchange.calendar.event'].with_delay(
                             priority=30).import_record(
                                 backend,

@@ -96,6 +96,7 @@ class ResUsers(models.Model):
     last_calendar_sync_date = fields.Date(
         default=_get_last_calendar_sync_date
     )
+    import_only_odoo_calendar_events = fields.Boolean(default=True)
 
     @api.onchange('exchange_synch', 'exchange_calendar_sync')
     def create_odoo_category(self):
