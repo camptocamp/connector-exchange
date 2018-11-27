@@ -48,3 +48,7 @@ script:
 after_success:
   - if [ "$DOCS" != "1" ] ; then travis_after_test_success; fi
     #  - if [ "$DOCS" == "1" ] ; then ./.travis_push_doc; fi
+
+branches:
+  except:
+    - /^merge-branch-.*$/
