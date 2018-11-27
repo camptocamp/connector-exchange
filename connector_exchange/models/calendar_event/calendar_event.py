@@ -44,23 +44,26 @@ class CalendarEvent(models.Model):
             Try to find a binding with provided backend and user.
             If not found, create a new one.
         """
-        real_calendars = (
-            list(set([calendar_id2real_id(calendar_id=cal.id) for cal in self])
+        if user.exchange_calendar_sync:
+            real_calendars = (
+                list(set(
+                    [calendar_id2real_id(calendar_id=cal.id) for cal in self])
                  )
-        )
-        if self.env.context.get('connector_no_export', False):
-            return True
-        else:
-            for calendar in self.browse(real_calendars):
-                bindings = calendar.exchange_bind_ids.filtered(
-                    lambda a: a.backend_id == backend and a.user_id == user and
-                    a['privacy'] != 'private')
-                if not bindings:
-                    self.env['exchange.calendar.event'].sudo().create(
-                        {'backend_id': backend.id,
-                         'user_id': user.id,
-                         'openerp_id': calendar.id}
-                    )
+            )
+            if self.env.context.get('connector_no_export', False):
+                return True
+            else:
+                for calendar in self.browse(real_calendars):
+                    bindings = calendar.exchange_bind_ids.filtered(
+                        lambda a: a.backend_id == backend and
+                        a.user_id == user and
+                        a['privacy'] != 'private')
+                    if not bindings:
+                        self.env['exchange.calendar.event'].sudo().create(
+                            {'backend_id': backend.id,
+                             'user_id': user.id,
+                             'openerp_id': calendar.id}
+                        )
         return True
 
     @api.model

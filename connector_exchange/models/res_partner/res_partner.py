@@ -31,15 +31,16 @@ class ResPartner(models.Model):
             Try to find a binding with provided backend and user.
             If not found, create a new one.
         """
-        for partner in self:
-            bindings = partner.exchange_bind_ids.filtered(
-                lambda a: a.backend_id == backend and a.user_id == user)
-            if not bindings:
-                self.env['exchange.res.partner'].create(
-                    {'backend_id': backend.id,
-                     'user_id': user.id,
-                     'openerp_id': partner.id}
-                )
+        if user.exchange_sync:
+            for partner in self:
+                bindings = partner.exchange_bind_ids.filtered(
+                    lambda a: a.backend_id == backend and a.user_id == user)
+                if not bindings:
+                    self.env['exchange.res.partner'].create(
+                        {'backend_id': backend.id,
+                         'user_id': user.id,
+                         'openerp_id': partner.id}
+                    )
         return True
 
 
