@@ -7,6 +7,10 @@
       <field name="value">60</field>
     </record>
 
+    <record model="ir.config_parameter" id="exchange_calendar_sync_max_horizon">
+      <field name="key">exchange_calendar_sync_max_horizon</field>
+      <field name="value">365</field>
+    </record>
+
   </data>
 </openerp>
-
