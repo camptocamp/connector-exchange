@@ -27,12 +27,7 @@ from ..backend import exchange_2010
 
 _logger = logging.getLogger(__name__)
 
-try:
-    from pyews.ews.data import FolderClass
-    from contextlib import closing, contextmanager
-except (ImportError, IOError) as err:
-    _logger.debug(err)
-
+from contextlib import closing, contextmanager
 
 RETRY_ON_ADVISORY_LOCK = 1  # seconds
 RETRY_WHEN_CONCURRENT_DETECTED = 1  # seconds
@@ -266,8 +261,8 @@ class ExchangeImporter(Importer):
             self.external_id,
         )
         # Keep a lock on this import until the transaction is committed
-        self.advisory_lock_or_retry(lock_name,
-                                    retry_seconds=RETRY_ON_ADVISORY_LOCK)
+        # self.advisory_lock_or_retry(lock_name,
+        #                             retry_seconds=RETRY_ON_ADVISORY_LOCK)
 
         skip = self._must_skip()
         if skip:
@@ -313,12 +308,13 @@ class ExchangeImporter(Importer):
             self._update(binding_rs, write_dict)
             # self.move_contact(contact_id)
         else:
+            # if not self.external_record:
+            #     _logger.debug('deleted in Exchange')
+            #     # self.binding.openerp_id.with_context(
+            #     #     connector_no_export=True).unlink()
+            # else:
             _logger.debug('exists --> UPDATE')
-            # commented : don't edit parent_id while updating contact
-            # if partners:
-            #     data['parent_id'] = partners[0].id
             binding = exchange_partners[0]
-
             self._update(binding, data)
 
     def _map_data(self):

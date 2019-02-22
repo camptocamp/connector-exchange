@@ -18,10 +18,8 @@
                 <page string="API" name="api">
                   <group colspan="4" col="4">
                     <field name="version" colspan="4"/>
-                    <field name="certificate_location" colspan="4"/>
                   </group>
                   <group col="4">
-                    <field name="location"/>
                     <field name="username"/>
                     <field name="password" password="1"/>
                   </group>
@@ -40,7 +38,6 @@
         <tree string="Exchange Backend" delete="false">
           <field name="name"/>
           <field name="version"/>
-          <field name="certificate_location"/>
         </tree>
       </field>
     </record>

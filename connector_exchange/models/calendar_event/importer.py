@@ -15,18 +15,11 @@ from odoo import fields
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
-
+from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
+                        DEFAULT_SERVER_DATETIME_FORMAT)
 
 _logger = logging.getLogger(__name__)
-try:
-    from pyews.ews.data import (SensitivityType,
-                                LegacyFreeBusyStatusType,
-                                DayOfWeekIndexType,
-                                ResponseTypeType,
-                                )
-except (ImportError, IOError) as err:
-    _logger.debug(err)
-
+from exchangelib import fields
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
@@ -36,25 +29,12 @@ SIMPLE_VALUE_FIELDS = {'subject': 'name',
                        'body': 'description',
                        }
 
-FREE_LIST = [LegacyFreeBusyStatusType.Free,
-             LegacyFreeBusyStatusType.NoData,
-             ]
+FREE_LIST = ['Free', 'Busy']
 
 
 def transform_to_odoo_date(exchange_date, user_tz, time=False, end=False):
-    parsed = parser.parse(exchange_date)
-    if not time:
-        parsed_user_tz = parsed.astimezone(pytz.timezone(user_tz))
-    else:
-        parsed_user_tz = parsed.astimezone(pytz.UTC)
-
-    if end:
-        parsed_user_tz -= datetime.timedelta(minutes=1)
-    naive_dt = parsed_user_tz.replace(tzinfo=None)
-    if time:
-        return fields.Datetime.to_string(naive_dt)
-    else:
-        return fields.Date.to_string(naive_dt)
+    return datetime.datetime.strftime(
+        exchange_date, DEFAULT_SERVER_DATETIME_FORMAT)
 
 
 @exchange_2010
@@ -64,27 +44,27 @@ class CalendarEventImporter(ExchangeImporter):
     def fill_start_end(self, event_instance):
         vals = {}
         user_tz = self.openerp_user.tz
-        if event_instance.is_all_day_event.value:
+        if event_instance.is_all_day:
             # fill start_date and stop_date
             vals['allday'] = True
             vals['start'] = transform_to_odoo_date(
-                event_instance.start.value, user_tz, time=False)
+                event_instance.start, user_tz, time=False)
             vals['stop'] = transform_to_odoo_date(
-                event_instance.end.value, user_tz, time=False, end=True)
+                event_instance.end, user_tz, time=False, end=True)
         else:
             # fill start_datetime and stop_datetime
             vals['allday'] = False
             vals['start'] = transform_to_odoo_date(
-                event_instance.start.value, user_tz, time=True)
+                event_instance.start, user_tz, time=True)
             vals['stop'] = transform_to_odoo_date(
-                event_instance.end.value, user_tz, time=True)
+                event_instance.end, user_tz, time=True)
         return vals
 
     def fill_privacy(self, event_instance):
         vals = {}
-        if event_instance.sensitivity.value == SensitivityType.Normal:
+        if event_instance.sensitivity == 'Normal':
             vals['privacy'] = 'public'
-        elif event_instance.sensitivity.value == SensitivityType.Confidential:
+        elif event_instance.sensitivity == 'Confidential':
             vals['privacy'] = 'confidential'
         else:
             vals['privacy'] = 'private'
@@ -94,7 +74,7 @@ class CalendarEventImporter(ExchangeImporter):
     def fill_free_busy_status(self, event_instance):
         vals = {}
 
-        if event_instance.legacy_free_busy_status.value in FREE_LIST:
+        if event_instance.legacy_free_busy_status in FREE_LIST:
             vals['show_as'] = 'free'
         else:
             vals['show_as'] = 'busy'
@@ -103,9 +83,9 @@ class CalendarEventImporter(ExchangeImporter):
 
     def fill_reminder(self, event_instance):
         vals = {}
-        if event_instance.is_reminder_set.value:
+        if event_instance.reminder_is_set:
             # fill reminder
-            remind_time = event_instance.reminder_minutes_before_start.value
+            remind_time = event_instance.reminder_minutes_before_start
             alarms_obj = self.env['calendar.alarm']
             alarms = alarms_obj.search(
                 [('duration_minutes', '=', remind_time)]
@@ -124,43 +104,44 @@ class CalendarEventImporter(ExchangeImporter):
         contact = self.env['exchange.res.partner']
 
         STATES_MAPPING = {
-            ResponseTypeType.Tentative: 'tentative',
-            ResponseTypeType.Decline: 'declined',
-            ResponseTypeType.Accept: 'accepted',
+            'Tentative': 'tentative',
+            'Decline': 'declined',
+            'Accept': 'accepted',
         }
         if self.exchange_events:
             evt = self.exchange_events[0]
         odoo_attendee_emails = evt.mapped('attendee_ids.email')
-        for attendee in event_instance.required_attendees.entries:
-            # attendee is a Attendee object from PyEWS
-            exchange_email = attendee.mailbox.email_address.value
-            if exchange_email in odoo_attendee_emails:
-                if attendee.response_type.value in (ResponseTypeType.Tentative,
-                                                    ResponseTypeType.Accept,
-                                                    ResponseTypeType.Decline):
-                    for attend in evt.attendee_ids:
-                        if attend.email == exchange_email:
-                            attend.state = (
-                                STATES_MAPPING[attendee.response_type.value])
-                        # auto accept event owner
-                        if attend.partner_id == self.openerp_user.partner_id:
-                            attend.state = 'accepted'
-                continue
-            else:
-                # create attendee
-                state = 'needsAction'
-                if attendee.response_type.value in STATES_MAPPING:
-                    state = STATES_MAPPING[attendee.response_type.value]
-                att_dict = {'cn': attendee.mailbox.name.value,
-                            'email': attendee.mailbox.email_address.value,
-                            'state': state}
-                vals['attendee_ids'].append((0, 0, att_dict))
+        if event_instance.required_attendees:
+            for attendee in event_instance.required_attendees:
+
+                exchange_email = attendee.mailbox.email_address
+                if exchange_email in odoo_attendee_emails:
+                    if attendee.response_type in ('Tentative',
+                                                  'Accept',
+                                                  'Decline'):
+                        for attend in evt.attendee_ids:
+                            if attend.email == exchange_email:
+                                attend.state = (
+                                    STATES_MAPPING[attendee.response_type])
+                            # auto accept event owner
+                            if attend.partner_id == self.openerp_user.partner_id:
+                                attend.state = 'accepted'
+                    continue
+                else:
+                    # create attendee
+                    state = 'needsAction'
+                    if attendee.response_type in STATES_MAPPING:
+                        state = STATES_MAPPING[attendee.response_type]
+                    att_dict = {'name': attendee.mailbox.name,
+                                'email': attendee.mailbox.email_address,
+                                'state': state}
+                    vals['attendee_ids'].append((0, 0, att_dict))
             # try map attendee to a partner in odoo
             partner_added = False
-            if attendee.mailbox.itemid.value is not None:
+            if attendee.mailbox.item_id is not None:
                 # we have an itemid corresponding to a contact which should
                 # have already been synchronized
-                ext_id = attendee.mailbox.itemid.value
+                ext_id = attendee.mailbox.itemid
                 contact = contact.search([('external_id', '=', ext_id)],
                                          order='create_date asc',
                                          limit=1)
@@ -170,8 +151,7 @@ class CalendarEventImporter(ExchangeImporter):
             elif not partner_added:
                 # search by name and email
                 contact = contact.search(
-                    [('name', '=', attendee.mailbox.name.value),
-                     ('email', '=', attendee.mailbox.email_address.value),
+                    [('email', '=', attendee.mailbox.email_address),
                      ('is_company', '=', False)],
                     order='create_date asc',
                     limit=1
@@ -182,8 +162,8 @@ class CalendarEventImporter(ExchangeImporter):
                 else:
                     # create a contact with parent=Generic
                     new_partner = contact.create(
-                        {'name': attendee.mailbox.name.value,
-                         'email': attendee.mailbox.email_address.value,
+                        {'name': attendee.mailbox.name,
+                         'email': attendee.mailbox.email_address,
                          'user_id': self.openerp_user.id,
                          'backend_id': self.backend_record.id,
                          'parent_id': self.env.ref(
@@ -198,7 +178,7 @@ class CalendarEventImporter(ExchangeImporter):
             vals['partner_ids'].append((4, self.openerp_user.partner_id.id))
             vals['attendee_ids'].append(
                 (0, 0,
-                 {'cn': self.openerp_user.partner_id.name,
+                 {'partner_id': self.openerp_user.partner_id.id,
                   'email': self.openerp_user.partner_id.email,
                   'state': 'accepted'}
                  )
@@ -211,7 +191,7 @@ class CalendarEventImporter(ExchangeImporter):
 
         """
         vals = {}
-        if event_instance.recurrence.get_children():
+        if event_instance.recurrence:
             user_tz = self.openerp_user.tz
             vals['recurrency'] = True
             # get recurrence end type
@@ -223,52 +203,52 @@ class CalendarEventImporter(ExchangeImporter):
             elif rec_end.tag == 'EndDateRecurrence':
                 vals['end_type'] = 'end_date'
                 vals['final_date'] = transform_to_odoo_date(
-                    rec_end.end_date.value, user_tz, time=False)
+                    rec_end.end_date, user_tz, time=False)
 
             elif rec_end.tag == 'NumberedRecurrence':
                 vals['end_type'] = 'count'
-                vals['count'] = int(rec_end.nb_occurrences.value)
+                vals['count'] = int(rec_end.nb_occurrences)
 
             # get recurrence type
             rec_rec_type = event_instance.recurrence._check_recurrence_type()
             rec_type = getattr(event_instance.recurrence, rec_rec_type)
             if rec_type.tag == 'DailyRecurrence':
                 vals['rrule_type'] = 'daily'
-                vals['interval'] = rec_type.interval.value
+                vals['interval'] = rec_type.interval
 
             elif rec_type.tag == 'WeeklyRecurrence':
                 vals['rrule_type'] = 'weekly'
-                vals['interval'] = rec_type.interval.value
-                exchange_days = rec_type.days_of_week.value.split()
+                vals['interval'] = rec_type.interval
+                exchange_days = rec_type.days_of_week.split()
                 odoo_days = [x[:2].lower() for x in exchange_days]
                 for elem in odoo_days:
                     vals[elem] = True
 
             elif rec_type.tag == 'AbsoluteMonthlyRecurrence':
                 vals['rrule_type'] = 'monthly'
-                vals['interval'] = rec_type.interval.value
+                vals['interval'] = rec_type.interval
                 vals['month_by'] = 'date'
-                vals['day'] = rec_type.day_of_month.value
+                vals['day'] = rec_type.day_of_month
 
             elif rec_type.tag == 'RelativeMonthlyRecurrence':
                 vals['rrule_type'] = 'monthly'
-                vals['interval'] = rec_type.interval.value
+                vals['interval'] = rec_type.interval
                 vals['month_by'] = 'day'
-                vals['week_list'] = rec_type.days_of_week.value[:2].upper()
+                vals['week_list'] = rec_type.days_of_week[:2].upper()
                 exchange_index = {
-                    DayOfWeekIndexType.First: '1',
-                    DayOfWeekIndexType.Second: '2',
-                    DayOfWeekIndexType.Third: '3',
-                    DayOfWeekIndexType.Fourth: '4',
-                    DayOfWeekIndexType.Last: '-1',
+                    fields.First: '1',
+                    fields.Second: '2',
+                    fields.Third: '3',
+                    fields.Fourth: '4',
+                    fields.Last: '-1',
                 }
                 vals['byday'] = (
-                    exchange_index[rec_type.day_of_week_index.value]
+                    exchange_index[rec_type.day_of_week_index]
                 )
 
             elif rec_type.tag == 'AbsoluteYearlyRecurrence':
                 vals['rrule_type'] = 'yearly'
-                vals['interval'] = rec_type.interval.value
+                vals['interval'] = rec_type.interval
 
             else:
                 # not implemented
@@ -281,7 +261,7 @@ class CalendarEventImporter(ExchangeImporter):
 
         for ex_field, odoo_mapping in SIMPLE_VALUE_FIELDS.iteritems():
             if isinstance(odoo_mapping, basestring):
-                vals[odoo_mapping] = getattr(event_instance, ex_field).value
+                vals[odoo_mapping] = getattr(event_instance, ex_field)
 
         vals.update(self.fill_start_end(event_instance))
         vals.update(self.fill_privacy(event_instance))
@@ -290,8 +270,8 @@ class CalendarEventImporter(ExchangeImporter):
         vals.update(self.fill_attendees(event_instance))
         vals.update(self.fill_recurrency(event_instance))
 
-        vals.update(change_key=event_instance.change_key.value,
-                    external_id=event_instance.itemid.value)
+        vals.update(change_key=event_instance.changekey,
+                    external_id=event_instance.item_id)
 
         return vals
 
@@ -302,14 +282,10 @@ class CalendarEventImporter(ExchangeImporter):
         """
         event_id = self.external_id
         adapter = self.backend_adapter
-        adapter.set_primary_smtp_address(self.openerp_user)
-        ews = adapter.ews
+        account = adapter.get_account(self.openerp_user)
 
-        # contact is an pyews.ews.contact.Contact instance
-        event = ews.GetCalendarItems([event_id], )[0]
-
+        event = account.calendar.get(id=event_id)
         vals = self.map_exchange_instance(event)
-
         return vals
 
     def bind_attachments(self, binding, event_id):
@@ -321,7 +297,7 @@ class CalendarEventImporter(ExchangeImporter):
         instead of in message_ids
         """
         adapter = self.backend_adapter
-        ews = adapter.ews
+        account = adapter.get_account(self.openerp_user)
         user = self.openerp_user
         att_obj = self.env['ir.attachment'].sudo(user.id)
 
@@ -340,12 +316,11 @@ class CalendarEventImporter(ExchangeImporter):
                 attach_by_name[att.name] = att
             else:
                 attach_by_name[att.name] |= att
-        adapter.set_primary_smtp_address(user)
 
-        new_read = ews.GetCalendarItems([event_id])[0]
-        for attachment in new_read.attachments.entries:
-            fname = attachment.name.value
-            content = attachment.content.value
+        new_read = account.calendar.get(id=event_id)
+        for attachment in new_read.attachments:
+            fname = attachment.name
+            content = attachment.content
 
             odoo_att = attach_by_name.get(fname)
             # for att in odoo_att:
@@ -391,12 +366,12 @@ class CalendarEventImporter(ExchangeImporter):
 
         if odoo_rec.allday:
             occ_read_start = transform_to_odoo_date(
-                occ_read.original_start.value,
+                occ_read.original_start,
                 self.openerp_user.tz,
                 time=False)
         else:
             occ_read_start = transform_to_odoo_date(
-                occ_read.original_start.value,
+                occ_read.original_start,
                 self.openerp_user.tz,
                 time=True)
         # find odoo recurrent event based on master_id + original_start
@@ -495,18 +470,18 @@ class CalendarEventImporter(ExchangeImporter):
 
     def manage_modified_deleted_occurrences(self, binding, event_id):
         adapter = self.backend_adapter
-        ews = adapter.ews
+        account = adapter.get_account(self.openerp_user)
         cal_env_obj = self.env['calendar.event']
         if isinstance(binding, int):
             binding = self.env['exchange.calendar.event'].browse(binding)
 
         odoo_record = binding.openerp_id
 
-        event_instance = ews.GetCalendarItems([event_id])[0]
+        event_instance = account.calendar.get(id=event_id)
 
         # manage modified_occurrences
-        if event_instance.modified_occurrences.entries:
-            for occ in event_instance.modified_occurrences.entries:
+        if event_instance.modified_occurrences:
+            for occ in event_instance.modified_occurrences:
                 # In an accurrence, there is only 4 informations:
                 #       - start
                 #       - end
@@ -515,7 +490,7 @@ class CalendarEventImporter(ExchangeImporter):
                 #
                 # We need to read the itemid to have a complete information
                 # of this occurrence
-                occ_read = ews.GetCalendarItems([occ.itemid.value])[0]
+                occ_read = account.calendar.get(id=occ.item_id)
                 detached_event_id = self._find_detached_or_detach_one(
                     odoo_record, occ_read
                 )
@@ -526,10 +501,10 @@ class CalendarEventImporter(ExchangeImporter):
                     connector_no_export=True).write(vals)
 
         # manage deleted_occurrences
-        if event_instance.deleted_occurrences.entries:
-            for occ in event_instance.deleted_occurrences.entries:
+        if event_instance.deleted_occurrences:
+            for occ in event_instance.deleted_occurrences:
                 # detach event from recurrence in Odoo
-                delete_start = occ.start.value
+                delete_start = occ.start
                 detached_event_id = self._find_detached_or_detach_one_deleted(
                     odoo_record, delete_start
                 )

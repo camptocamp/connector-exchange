@@ -22,7 +22,7 @@ class ExchangeBinding(models.AbstractModel):
         ondelete='restrict'
     )
     external_id = fields.Char(string='ID in Exchange',
-                              select=True)
+                              index=True)
     user_id = fields.Many2one(comodel_name='res.users',
                               string='User',
                               required=True,
@@ -104,4 +104,4 @@ class ExchangeBinding(models.AbstractModel):
         self.ensure_one()
         with user.default_backend.get_environment(self._name) as connector_env:
             deleter = connector_env.get_connector_unit(ExchangeDisabler)
-            return deleter.run(external_id, user.id)
+            return deleter.run(external_id, user)
