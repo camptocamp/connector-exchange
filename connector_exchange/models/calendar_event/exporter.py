@@ -116,7 +116,7 @@ class CalendarEventExporter(ExchangeExporter):
             event.is_reminder_set = False
 
     def parse_date(self, dt):
-        tz = EWSTimeZone.timezone('America/Chicago')
+        tz = EWSTimeZone.timezone('UTC')
         dt = datetime.datetime.strptime(
             dt, DEFAULT_SERVER_DATETIME_FORMAT)
         odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,

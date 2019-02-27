@@ -45,6 +45,11 @@ class ExchangeBackend(models.Model):
         required=True,
         help="Webservice password",
     )
+    disable_autodiscover = fields.Boolean(default=False)
+    location = fields.Char(
+        required=True,
+        help="Address of Exchange WSDL",
+    )
     last_import_date = fields.Datetime(string='Last Import Date')
     last_export_date = fields.Datetime(string='Last Export Date')
     backend_folder_ids = fields.One2many('res.users.backend.folder',

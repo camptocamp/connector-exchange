@@ -18,6 +18,8 @@
                 <page string="API" name="api">
                   <group colspan="4" col="4">
                     <field name="version" colspan="4"/>
+                    <field name="disable_autodiscover"/>
+                    <field name="location" attrs="{'invisible': [('disable_autodiscover', '=', False)]}"/>
                   </group>
                   <group col="4">
                     <field name="username"/>

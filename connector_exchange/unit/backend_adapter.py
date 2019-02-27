@@ -5,8 +5,11 @@
 
 import logging
 from odoo.addons.connector.unit.backend_adapter import BackendAdapter
-from exchangelib import IMPERSONATION, Account, Credentials, ServiceAccount
+from exchangelib import IMPERSONATION, Account, Credentials, ServiceAccount, Configuration, NTLM
+from exchangelib.protocol import BaseProtocol, NoVerifyHTTPAdapter
 
+
+BaseProtocol.HTTP_ADAPTER_CLS = NoVerifyHTTPAdapter
 
 _logger = logging.getLogger(__name__)
 
@@ -31,6 +34,16 @@ class ExchangeAdapter(BackendAdapter):
                                           password=backend.password)
 
     def get_account(self, user):
+        if self.backend_record.disable_autodiscover:
+            config = Configuration(server=self.backend_record.location,
+                                   auth_type=NTLM,
+                                   credentials=self.credentials)
+
+            return Account(primary_smtp_address=user.email,
+                           config=config,
+                           autodiscover=False,
+                           access_type=IMPERSONATION)
+
         return Account(primary_smtp_address=user.email,
                        credentials=self.credentials,
                        autodiscover=True, access_type=IMPERSONATION)
