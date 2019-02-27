@@ -4,6 +4,7 @@
     <record forcecreate="True" id="ir_cron_sync_import_contact_partner" model="ir.cron">
       <field name="name">Connector Exchange - Import Contacts</field>
       <field name="user_id" ref="base.user_root"/>
+      <field eval="False" name="active"/>
       <field name="interval_number">1</field>
       <field name="interval_type">minutes</field>
       <field name="numbercall">-1</field>
@@ -16,6 +17,7 @@
     <record forcecreate="True" id="ir_cron_sync_export_contact_partner" model="ir.cron">
       <field name="name">Connector Exchange - Export Contacts</field>
       <field name="user_id" ref="base.user_root"/>
+      <field eval="False" name="active"/>
       <field name="interval_number">1</field>
       <field name="interval_type">minutes</field>
       <field name="numbercall">-1</field>
@@ -28,6 +30,7 @@
   <record forcecreate="True" id="ir_cron_sync_import_calendar" model="ir.cron">
       <field name="name">Connector Exchange - Import Calendars</field>
       <field name="user_id" ref="base.user_root"/>
+      <field eval="False" name="active"/>
       <field name="interval_number">1</field>
       <field name="interval_type">minutes</field>
       <field name="numbercall">-1</field>
@@ -40,6 +43,7 @@
     <record forcecreate="True" id="ir_cron_sync_export_calendar" model="ir.cron">
       <field name="name">Connector Exchange - Export Calendars</field>
       <field name="user_id" ref="base.user_root"/>
+      <field eval="False" name="active"/>
       <field name="interval_number">1</field>
       <field name="interval_type">minutes</field>
       <field name="numbercall">-1</field>

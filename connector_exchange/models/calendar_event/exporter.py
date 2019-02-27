@@ -110,7 +110,7 @@ class CalendarEventExporter(ExchangeExporter):
             alarm = alarms[0]
             event.is_reminder_set = True
             event.reminder_due_by = convert_to_exchange(
-                self.binding.start, time=True)
+                self.parse_date(self.binding.start), time=True)
             event.reminder_minutes_before_start = alarm.duration_minutes
         else:
             event.is_reminder_set = False
@@ -177,7 +177,7 @@ class CalendarEventExporter(ExchangeExporter):
             if (not self._attendee_already_exists(
                     attendee.email, event)):
                 att = Attendee(
-                    mailbox=Mailbox(email_address='attendee.email',
+                    mailbox=Mailbox(email_address=attendee.email,
                                     name=attendee.common_name,
                                     ),
                     response_type='Accept',
