@@ -102,6 +102,8 @@ class ExchangeBinding(models.AbstractModel):
     def export_delete_record(self, external_id, user):
         """ Delete a record on Exchange """
         self.ensure_one()
+        if self.env.context.get('connector_no_export'):
+            return
         with user.default_backend.get_environment(self._name) as connector_env:
             deleter = connector_env.get_connector_unit(ExchangeDisabler)
             return deleter.run(external_id, user)
