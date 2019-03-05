@@ -443,8 +443,15 @@ class CalendarEventDisabler(ExchangeDisabler):
         """
         if not external_id:
             return _("Record does not exists in exchange")
+        if self.env.context.get('connector_no_export'):
+            return
         event = account.calendar.get(id=external_id)
-        event.delete(send_meeting_cancellations=SEND_ONLY_TO_ALL)
+        try:
+            event.delete(send_meeting_cancellations=SEND_ONLY_TO_ALL)
+        except AttributeError as exp:
+            return _(
+                "Seems event with ID %s has already been deleted in Exchange"
+            ) % external_id
         return _("Record with ID %s deleted on Exchange") % external_id
 
     def _run(self, external_id, user_id):
