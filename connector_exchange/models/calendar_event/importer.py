@@ -7,20 +7,16 @@ import base64
 import logging
 
 
-import pytz
 import datetime
-from dateutil import parser
 from ...backend import exchange_2010
-from odoo import fields
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
-from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
-                        DEFAULT_SERVER_DATETIME_FORMAT)
+from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
+
+from exchangelib import fields as ex_fields
 
 _logger = logging.getLogger(__name__)
-from exchangelib import fields
-
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
 
@@ -111,6 +107,7 @@ class CalendarEventImporter(ExchangeImporter):
         if self.exchange_events:
             evt = self.exchange_events[0]
         odoo_attendee_emails = evt.mapped('attendee_ids.email')
+
         if event_instance.required_attendees:
             for attendee in event_instance.required_attendees:
 
@@ -124,7 +121,8 @@ class CalendarEventImporter(ExchangeImporter):
                                 attend.state = (
                                     STATES_MAPPING[attendee.response_type])
                             # auto accept event owner
-                            if attend.partner_id == self.openerp_user.partner_id:
+                            user_partner = self.openerp_user.partner_id
+                            if attend.partner_id == user_partner:
                                 attend.state = 'accepted'
                     continue
                 else:
@@ -136,41 +134,50 @@ class CalendarEventImporter(ExchangeImporter):
                                 'email': attendee.mailbox.email_address,
                                 'state': state}
                     vals['attendee_ids'].append((0, 0, att_dict))
-            # try map attendee to a partner in odoo
-            partner_added = False
-            if attendee.mailbox.item_id is not None:
-                # we have an itemid corresponding to a contact which should
-                # have already been synchronized
-                ext_id = attendee.mailbox.itemid
-                contact = contact.search([('external_id', '=', ext_id)],
-                                         order='create_date asc',
-                                         limit=1)
-                if contact and len(contact) == 1:
-                    partner_added = True
-                    vals['partner_ids'].append((4, contact.openerp_id.id))
-            elif not partner_added:
-                # search by name and email
-                contact = contact.search(
-                    [('email', '=', attendee.mailbox.email_address),
-                     ('is_company', '=', False)],
-                    order='create_date asc',
-                    limit=1
-                )
-                if contact:
-                    partner_added = True
-                    vals['partner_ids'].append((4, contact.openerp_id.id))
-                else:
-                    # create a contact with parent=Generic
-                    new_partner = contact.create(
-                        {'name': attendee.mailbox.name,
-                         'email': attendee.mailbox.email_address,
-                         'user_id': self.openerp_user.id,
-                         'backend_id': self.backend_record.id,
-                         'parent_id': self.env.ref(
-                             'connector_exchange.res_partner_GENERIC').id,
-                         }
+
+                # try map attendee to a partner in odoo
+                partner_added = False
+                if attendee.mailbox.item_id is not None:
+                    # we have an itemid corresponding to a contact which should
+                    # have already been synchronized
+                    ext_id = attendee.mailbox.itemid
+                    contact = contact.search([('external_id', '=', ext_id)],
+                                             order='create_date asc',
+                                             limit=1)
+                    if contact and len(contact) == 1:
+                        partner_added = True
+                        vals['partner_ids'].append((4, contact.openerp_id.id))
+                elif not partner_added:
+                    # search by name and email
+                    contact = contact.search(
+                        [('email', '=', attendee.mailbox.email_address),
+                         ('is_company', '=', False)],
+                        order='create_date asc',
+                        limit=1
                     )
-                    vals['partner_ids'].append((4, new_partner.openerp_id.id))
+                    partner = self.env['res.partner'].search(
+                        [('email', '=', attendee.mailbox.email_address),
+                         ('is_company', '=', False)],
+                        limit=1
+                    )
+                    if contact:
+                        partner_added = True
+                        vals['partner_ids'].append((4, contact.openerp_id.id))
+                    elif partner:
+                        vals['partner_ids'].append((4, partner.id))
+                    else:
+                        # create a contact with parent=Generic
+                        new_partner = contact.create(
+                            {'name': attendee.mailbox.name,
+                             'email': attendee.mailbox.email_address,
+                             'user_id': self.openerp_user.id,
+                             'backend_id': self.backend_record.id,
+                             'parent_id': self.env.ref(
+                                 'connector_exchange.res_partner_GENERIC').id,
+                             }
+                        )
+                        vals['partner_ids'].append(
+                            (4, new_partner.openerp_id.id))
 
         # add owner of the event as attendee
         added_partner_ids = [x[1] for x in vals['partner_ids']]
@@ -236,11 +243,11 @@ class CalendarEventImporter(ExchangeImporter):
                 vals['month_by'] = 'day'
                 vals['week_list'] = rec_type.days_of_week[:2].upper()
                 exchange_index = {
-                    fields.First: '1',
-                    fields.Second: '2',
-                    fields.Third: '3',
-                    fields.Fourth: '4',
-                    fields.Last: '-1',
+                    ex_fields.First: '1',
+                    ex_fields.Second: '2',
+                    ex_fields.Third: '3',
+                    ex_fields.Fourth: '4',
+                    ex_fields.Last: '-1',
                 }
                 vals['byday'] = (
                     exchange_index[rec_type.day_of_week_index]
