@@ -16,7 +16,7 @@ from ...backend import exchange_2010
 _logger = logging.getLogger(__name__)
 _logger = logging.getLogger(__name__)
 
-from exchangelib import EWSDateTime, EWSTimeZone, Mailbox, Attendee, \
+from exchangelib import EWSDate, EWSDateTime, EWSTimeZone, Mailbox, Attendee, \
     CalendarItem, fields
 from exchangelib.items import SEND_ONLY_TO_ALL, SEND_ONLY_TO_CHANGED
 import pytz
@@ -115,29 +115,36 @@ class CalendarEventExporter(ExchangeExporter):
         else:
             event.is_reminder_set = False
 
-    def parse_date(self, dt):
+    def parse_date(self, dt, all_day=False, end=False):
         tz = EWSTimeZone.timezone('UTC')
-        dt = datetime.datetime.strptime(
-            dt, DEFAULT_SERVER_DATETIME_FORMAT)
-        odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
-                          dt.minute))
+        if all_day:
+            dt = datetime.datetime.strptime(
+                dt, DEFAULT_SERVER_DATE_FORMAT)
+        else:
+            dt = datetime.datetime.strptime(
+                dt, DEFAULT_SERVER_DATETIME_FORMAT)
+        if all_day and end:
+            odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, 23,
+                          59))
+        else:
+            odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
+                              dt.minute))
         return odt
 
     def fill_start_end(self, event):
+        event.is_all_day = self.binding.allday
         if self.binding.allday:
-            start = self.parse_date(self.binding.start)
-            stop = self.parse_date(self.binding.stop)
-            event.is_all_day_event = True
-            event.start = start
-            event.end = stop
-            # event.save(update_fields=['is_all_day_event', 'start', 'end'])
+            start = self.parse_date(self.binding.start_date,
+                                    all_day=self.binding.allday)
+            stop = self.parse_date(self.binding.stop_date,
+                                   all_day=self.binding.allday, end=True)
         else:
-            start = self.parse_date(self.binding.start)
-            stop = self.parse_date(self.binding.stop)
-            event.is_all_day_event = False
-            event.start = start
-            event.end = stop
-            # event.save(update_fields=['is_all_day_event', 'start', 'end'])
+            start = self.parse_date(self.binding.start,
+                                    all_day=self.binding.allday)
+            stop = self.parse_date(self.binding.stop,
+                                   all_day=self.binding.allday)
+        event.start = start
+        event.end = stop
 
     def _attendee_already_exists(self, attendee_email, event):
         """
@@ -303,6 +310,7 @@ class CalendarEventExporter(ExchangeExporter):
         self.fill_reminder(event)
         self.fill_attendees(event)
         self.fill_recurrency(event)
+        __import__('pdb').set_trace()
         return event
 
     def _update_data(self, event=None, fields=None, **kwargs):

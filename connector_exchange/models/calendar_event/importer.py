@@ -32,9 +32,13 @@ SIMPLE_VALUE_FIELDS = {'subject': 'name',
 FREE_LIST = ['Free', 'Busy']
 
 
-def transform_to_odoo_date(exchange_date, user_tz, time=False, end=False):
+def transform_to_odoo_date(exchange_date, allday=False):
+    fmt = DEFAULT_SERVER_DATETIME_FORMAT
+    if allday:
+        fmt = DEFAULT_SERVER_DATE_FORMAT
+
     return datetime.datetime.strftime(
-        exchange_date, DEFAULT_SERVER_DATETIME_FORMAT)
+        exchange_date, fmt)
 
 
 @exchange_2010
@@ -48,16 +52,16 @@ class CalendarEventImporter(ExchangeImporter):
             # fill start_date and stop_date
             vals['allday'] = True
             vals['start'] = transform_to_odoo_date(
-                event_instance.start, user_tz, time=False)
+                event_instance.start, allday=event_instance.is_all_day)
             vals['stop'] = transform_to_odoo_date(
-                event_instance.end, user_tz, time=False, end=True)
+                event_instance.end, allday=event_instance.is_all_day)
         else:
             # fill start_datetime and stop_datetime
             vals['allday'] = False
             vals['start'] = transform_to_odoo_date(
-                event_instance.start, user_tz, time=True)
+                event_instance.start)
             vals['stop'] = transform_to_odoo_date(
-                event_instance.end, user_tz, time=True)
+                event_instance.end)
         return vals
 
     def fill_privacy(self, event_instance):

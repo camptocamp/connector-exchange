@@ -180,7 +180,7 @@ class ExchangeBackend(models.Model):
                     if odoo_categ and sensitivity not in \
                             ['Private', 'Personal']:
                         self.env['exchange.calendar.event'].with_delay(
-                            priority=30).import_record(
+                            ).import_record(
                                 backend,
                                 user,
                                 exchange_event.item_id)
