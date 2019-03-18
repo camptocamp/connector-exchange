@@ -115,29 +115,24 @@ class CalendarEventExporter(ExchangeExporter):
         else:
             event.is_reminder_set = False
 
-    def parse_date(self, dt, all_day=False, end=False):
+    def parse_date(self, dt, all_day=False, end=False, user_tz=False):
         tz = EWSTimeZone.timezone('UTC')
         if all_day:
-            dt = datetime.datetime.strptime(
-                dt, DEFAULT_SERVER_DATE_FORMAT)
-        else:
-            dt = datetime.datetime.strptime(
-                dt, DEFAULT_SERVER_DATETIME_FORMAT)
-        if all_day and end:
-            odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, 23,
-                          59))
-        else:
-            odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
+            tz = user_tz
+        dt = datetime.datetime.strptime(
+            dt, DEFAULT_SERVER_DATETIME_FORMAT)
+
+        odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
                               dt.minute))
         return odt
 
     def fill_start_end(self, event):
         event.is_all_day = self.binding.allday
         if self.binding.allday:
-            start = self.parse_date(self.binding.start_date,
-                                    all_day=self.binding.allday)
-            stop = self.parse_date(self.binding.stop_date,
-                                   all_day=self.binding.allday, end=True)
+            start = self.parse_date(self.binding.start,
+                                    all_day=self.binding.allday, user_tz=event.account.default_timezone)
+            stop = self.parse_date(self.binding.stop,
+                                   all_day=self.binding.allday, user_tz=event.account.default_timezone)
         else:
             start = self.parse_date(self.binding.start,
                                     all_day=self.binding.allday)
@@ -310,7 +305,6 @@ class CalendarEventExporter(ExchangeExporter):
         self.fill_reminder(event)
         self.fill_attendees(event)
         self.fill_recurrency(event)
-        __import__('pdb').set_trace()
         return event
 
     def _update_data(self, event=None, fields=None, **kwargs):
@@ -323,7 +317,7 @@ class CalendarEventExporter(ExchangeExporter):
     def _create_data(self, fields=None):
         adapter = self.backend_adapter
         account = adapter.get_account(self.openerp_user)
-        event = CalendarItem()
+        event = CalendarItem(account=account)
         event = self.fill_calendar_event(event, fields)
         event.categories = ['Odoo']
         record = account.bulk_create(folder=account.calendar, items=[event])
@@ -391,8 +385,6 @@ class CalendarEventExporter(ExchangeExporter):
         assert self.binding
         user = self.binding.user_id
         self.openerp_user = user
-        adapter = self.backend_adapter
-        account = adapter.get_account(self.openerp_user)
         external_id = self.binding.external_id
         if not external_id:
             fields = None
@@ -402,6 +394,8 @@ class CalendarEventExporter(ExchangeExporter):
             self.binding.external_id = exchange_record.id
             self.binding.change_key = exchange_record.changekey
         else:
+            adapter = self.backend_adapter
+            account = adapter.get_account(self.openerp_user)
             # we have a binding
             # try to find an exchange event with tord(account)
             exchange_record = account.calendar.get(id=external_id)

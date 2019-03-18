@@ -24,6 +24,7 @@
                   <group col="4">
                     <field name="username"/>
                     <field name="password" password="1"/>
+                    <field name="default_tz"/>
                   </group>
                 </page>
               </notebook>

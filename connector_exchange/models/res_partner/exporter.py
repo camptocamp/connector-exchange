@@ -70,6 +70,7 @@ class PartnerExporter(ExchangeExporter):
     _model_name = ['exchange.res.partner']
 
     def fill_contact(self, contact, fields):
+        __import__('pdb').set_trace()
         if fields is None:
             fields = (
                 SIMPLE_VALUE_FIELDS.keys() + RELATIONAL_VALUE_FIELDS.keys() \

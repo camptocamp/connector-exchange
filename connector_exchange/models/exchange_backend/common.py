@@ -8,6 +8,7 @@ import logging
 from odoo import models, fields, api
 
 from odoo.addons.connector.connector import ConnectorEnvironment
+from odoo.addons.base.res.res_partner import _tz_get
 
 from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
@@ -57,6 +58,9 @@ class ExchangeBackend(models.Model):
                                          string="Folders")
     contact_bind_ids = fields.One2many('exchange.res.partner', 'backend_id',
                                        string="Contact bindings")
+    default_tz = fields.Selection(_tz_get,
+                                  string='Default timezone',
+                                  default='UTC')
 
     @api.model
     def cron_export_contact_partner(self):
