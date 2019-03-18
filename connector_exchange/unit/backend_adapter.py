@@ -5,7 +5,7 @@
 
 import logging
 from odoo.addons.connector.unit.backend_adapter import BackendAdapter
-from exchangelib import IMPERSONATION, Account, Credentials, ServiceAccount, Configuration, NTLM
+from exchangelib import IMPERSONATION, Account, Credentials, ServiceAccount, Configuration, NTLM, EWSTimeZone
 from exchangelib.protocol import BaseProtocol, NoVerifyHTTPAdapter
 
 
@@ -34,6 +34,7 @@ class ExchangeAdapter(BackendAdapter):
                                           password=backend.password)
 
     def get_account(self, user):
+        tz = self.env.context.get('tz', self.backend_record.default_tz)
         if self.backend_record.disable_autodiscover:
             config = Configuration(server=self.backend_record.location,
                                    auth_type=NTLM,
@@ -42,7 +43,9 @@ class ExchangeAdapter(BackendAdapter):
             return Account(primary_smtp_address=user.email,
                            config=config,
                            autodiscover=False,
-                           access_type=IMPERSONATION)
+                           access_type=IMPERSONATION,
+                           default_timezone=EWSTimeZone.timezone(tz)
+                           )
 
         return Account(primary_smtp_address=user.email,
                        credentials=self.credentials,
