@@ -3,7 +3,6 @@
 # Copyright 2016-2017 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-import pytz
 import logging
 from odoo import models, fields, api
 
@@ -14,9 +13,10 @@ from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
 
 from exchangelib import EWSDateTime, EWSTimeZone
-_logger = logging.getLogger(__name__)
 
 from contextlib import contextmanager
+
+_logger = logging.getLogger(__name__)
 
 
 class ExchangeBackend(models.Model):
@@ -107,19 +107,19 @@ class ExchangeBackend(models.Model):
                 contact_folder = account.contacts
                 # for each contact found, run import_record
                 for exchange_contact in contact_folder.all():
-                    odoo_categ = False
-                    if not exchange_contact.categories:
-                        continue
-                    for categ in exchange_contact.categories:
-                        if categ == 'Odoo':
-                            odoo_categ = True
-                            break
-                    if odoo_categ:
-                        self.env['exchange.res.partner'].with_delay(
-                            priority=30).import_record(
-                                backend,
-                                user,
-                                exchange_contact.item_id)
+                    # odoo_categ = False
+                    # if not exchange_contact.categories:
+                    #     continue
+                    # for categ in exchange_contact.categories:
+                    #     if categ == 'Odoo':
+                    #         odoo_categ = True
+                    #         break
+                    # if odoo_categ:
+                    self.env['exchange.res.partner'].with_delay(
+                        priority=30).import_record(
+                            backend,
+                            user,
+                            exchange_contact.item_id)
         return True
 
     @api.model
@@ -141,9 +141,6 @@ class ExchangeBackend(models.Model):
 
         for backend in self:
             for user in users:
-                start_date = user.last_calendar_sync_date
-                exchange_start_date = '%sT00:00:00Z' % start_date
-
                 imported_events = []
                 existing_events = user.exchange_calendar_ids.mapped(
                     'exchange_bind_ids')
@@ -174,15 +171,15 @@ class ExchangeBackend(models.Model):
                 # and if categories contains Odoo
                 for exchange_event in exchange_events:
                     sensitivity = exchange_event.sensitivity
-                    odoo_categ = False
-                    if not exchange_event.categories:
-                        continue
-                    for categ in exchange_event.categories:
-                        if categ == 'Odoo':
-                            odoo_categ = True
-                            break
-                    if odoo_categ and sensitivity not in \
-                            ['Private', 'Personal']:
+                    # odoo_categ = False
+                    # if not exchange_event.categories:
+                    #     continue
+                    # for categ in exchange_event.categories:
+                    #     if categ == 'Odoo':
+                    #         odoo_categ = True
+                    #         break
+                    # if odoo_categ and sensitivity not in \
+                    if sensitivity not in ['Private', 'Personal']:
                         self.env['exchange.calendar.event'].with_delay(
                             ).import_record(
                                 backend,
