@@ -14,6 +14,9 @@ from ...backend import exchange_2010
 _logger = logging.getLogger(__name__)
 
 from exchangelib import Contact
+from exchangelib.indexed_properties import (PhysicalAddress,
+                                            EmailAddress,
+                                            PhoneNumber)
 
 EXCHANGE_STREET_SEPARATOR = ' // '
 EXCHANGE_NOT_FOUND = 'The specified object was not found in the store.'
@@ -26,7 +29,7 @@ def _compute_subst(binding):
                                              sep=EXCHANGE_STREET_SEPARATOR),
         'city': binding.city,
         'zipcode': binding.zip,
-        'state': binding.state_id.name,
+        'state': binding.state_id.name or "/",
         'country': binding.country_id.name,
     }
 
@@ -38,13 +41,13 @@ def _construct_street(rec, sep=' '):
 
 SIMPLE_VALUE_FIELDS = {'firstname': 'given_name',
                        'name': 'display_name',
-                       'lastname': ['complete_name', 'surname'],
-                       'website': 'business_home_page',
+                       'lastname': 'nickname',
+                       'website': 'business_homepage',
                        'function': 'job_title',
-                       'email': ['email_addresses'],
-                       'phone': ['phone_numbers'],
-                       'fax': ['phone_numbers'],
-                       'mobile': ['phone_numbers']
+                       # 'email': ['email_addresses'],
+                       # 'phone': ['phone_numbers'],
+                       # 'fax': ['phone_numbers'],
+                       # 'mobile': ['phone_numbers']
                        }
 
 RELATIONAL_VALUE_FIELDS = {'title': ['complete_name', 'title'],
@@ -52,6 +55,9 @@ RELATIONAL_VALUE_FIELDS = {'title': ['complete_name', 'title'],
                            # 'position_id': 'profession',
                            }
 
+PHONE_VALUE_FIELDS = {'phone': 'BusinessPhone',
+                      'fax': 'BusinessFax',
+                      'mobile': 'MobilePhone'}
 
 ADDRESS_FIELDS = ['street', 'street2', 'street3', 'zip', 'city', 'state_id',
                   'country_id']
@@ -59,9 +65,9 @@ ADDRESS_FIELDS = ['street', 'street2', 'street3', 'zip', 'city', 'state_id',
 ADDRESS_DICT = {'physical_addresses': {
     'street': "%(street_computed)s",
     'city': "%(city)s",
-    'postal_code': "%(zipcode)s",
+    'zipcode': "%(zipcode)s",
     'state': "%(state)s",
-    'country_region': "%(country)s"}
+    'country': "%(country)s"}
     }
 
 
@@ -70,11 +76,11 @@ class PartnerExporter(ExchangeExporter):
     _model_name = ['exchange.res.partner']
 
     def fill_contact(self, contact, fields):
-        __import__('pdb').set_trace()
-        if fields is None:
+        contact.file_as_mapping = 'FirstSpaceLast'
+        if fields is None or fields == []:
             fields = (
-                SIMPLE_VALUE_FIELDS.keys() + RELATIONAL_VALUE_FIELDS.keys() \
-                + ADDRESS_FIELDS
+                SIMPLE_VALUE_FIELDS.keys() + RELATIONAL_VALUE_FIELDS.keys() +
+                ADDRESS_FIELDS + PHONE_VALUE_FIELDS.keys() + ['email']
                 )
 
         if 'lastname' in fields or 'firstname' in fields:
@@ -111,10 +117,11 @@ class PartnerExporter(ExchangeExporter):
                 contact.__setattr__(v, odoo_value.name)
 
         if set(ADDRESS_FIELDS) & set(fields):
+            # sync only Business address
             not_found = True
             if contact.physical_addresses:
                 for atype in contact.physical_addresses:
-                    if atype.attrib['Key'] == 'Business':
+                    if atype.label == 'Business':
                         not_found = False
                         subst = _compute_subst(self.binding)
 
@@ -123,17 +130,46 @@ class PartnerExporter(ExchangeExporter):
                             valu = valu % subst
                             if valu == 'False':
                                 valu = None
-                            getattr(atype, key).value = valu
+                            atype.__setattr__(key, valu)
 
             if not_found:
-                contact.__setattr__('Key', 'Business')
                 subst = _compute_subst(self.binding)
-                for key, valu in ADDRESS_DICT[
-                        "physical_addresses"].iteritems():
-                    valu = valu % subst
-                    if valu == 'False':
-                        valu = None
-                    contact.__setattr__(key, valu)
+                addrs = []
+                addr = PhysicalAddress(street=subst['street_computed'],
+                                       city=subst['city'],
+                                       country=subst['country'],
+                                       state='',
+                                       zipcode=subst['zipcode']
+                                       )
+                addr.label = "Business"
+                addrs.append(addr)
+                contact.physical_addresses = addrs
+        else:
+            if contact.physical_addresses:
+                for addr in contact.physical_addresses:
+                    for fi in addr.__slots__:
+                        if getattr(addr, fi) is None:
+                            setattr(addr, fi, ' ')
+
+        if 'email' in fields:
+            contact.email_addresses = [EmailAddress(label='EmailAddress1',
+                                                    email=self.binding.email)]
+        phones_to_update = set(PHONE_VALUE_FIELDS.keys()) & set(fields)
+        if phones_to_update:
+            not_found = True
+            for f in list(phones_to_update):
+                if contact.phone_numbers:
+                    for mails_inst in contact.phone_numbers:
+                        if mails_inst.label == PHONE_VALUE_FIELDS[f]:
+                            not_found = False
+                            mails_inst.phone_number = getattr(self.binding, f)
+                if not_found:
+                    value = PhoneNumber(label=PHONE_VALUE_FIELDS[f],
+                                        phone_number=getattr(self.binding, f))
+                    if isinstance(contact.phone_numbers, list):
+                        contact.phone_numbers.append(value)
+                    else:
+                        contact.phone_numbers = [value]
         return contact
 
     def _update_data(self, fields=None, **kwargs):
@@ -147,7 +183,7 @@ class PartnerExporter(ExchangeExporter):
     def _create_data(self, fields=None):
         adapter = self.backend_adapter
         account = adapter.get_account(self.openerp_user)
-        contact = Contact()
+        contact = Contact(account=account)
         contact = self.fill_contact(contact, fields)
         contact.categories = ['Odoo']
         contact = account.bulk_create(folder=account.contacts, items=[contact])
