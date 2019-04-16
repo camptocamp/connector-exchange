@@ -13,17 +13,14 @@ from ...backend import exchange_2010
 
 _logger = logging.getLogger(__name__)
 
-try:
-    from pyews.ews.contact import Contact, PostalAddress
-    from pyews.ews.data import (EmailKey,
-                                PhoneKey,
-                                PhysicalAddressType,
-                                )
-except (ImportError, IOError) as err:
-    _logger.debug(err)
-
+from exchangelib import Contact
+from exchangelib.indexed_properties import (PhysicalAddress,
+                                            EmailAddress,
+                                            PhoneNumber)
 
 EXCHANGE_STREET_SEPARATOR = ' // '
+EXCHANGE_NOT_FOUND = 'The specified object was not found in the store.'
+EXCHANGE_ERROR = 'Id is malformed.'
 
 
 def _compute_subst(binding):
@@ -32,7 +29,7 @@ def _compute_subst(binding):
                                              sep=EXCHANGE_STREET_SEPARATOR),
         'city': binding.city,
         'zipcode': binding.zip,
-        'state': binding.state_id.name,
+        'state': binding.state_id.name or "/",
         'country': binding.country_id.name,
     }
 
@@ -42,10 +39,15 @@ def _construct_street(rec, sep=' '):
         return sep.join(part for part in streets if part)
 
 
-SIMPLE_VALUE_FIELDS = {'firstname': ['complete_name', 'given_name'],
-                       'lastname': ['complete_name', 'surname'],
-                       'website': 'business_home_page',
-                       'function': 'job_title'
+SIMPLE_VALUE_FIELDS = {'firstname': 'given_name',
+                       'name': 'display_name',
+                       'lastname': 'nickname',
+                       'website': 'business_homepage',
+                       'function': 'job_title',
+                       # 'email': ['email_addresses'],
+                       # 'phone': ['phone_numbers'],
+                       # 'fax': ['phone_numbers'],
+                       # 'mobile': ['phone_numbers']
                        }
 
 RELATIONAL_VALUE_FIELDS = {'title': ['complete_name', 'title'],
@@ -53,15 +55,9 @@ RELATIONAL_VALUE_FIELDS = {'title': ['complete_name', 'title'],
                            # 'position_id': 'profession',
                            }
 
-MULTIPLE_VALUE_FIELDS = {'email': {'exchange': 'emails',
-                                   'type': EmailKey.Email1},
-                         'phone': {'exchange': 'phones',
-                                   'type': PhoneKey.PrimaryPhone},
-                         'fax': {'exchange': 'phones',
-                                 'type': PhoneKey.BusinessFax},
-                         'mobile': {'exchange': 'phones',
-                                    'type': PhoneKey.MobilePhone},
-                         }
+PHONE_VALUE_FIELDS = {'phone': 'BusinessPhone',
+                      'fax': 'BusinessFax',
+                      'mobile': 'MobilePhone'}
 
 ADDRESS_FIELDS = ['street', 'street2', 'street3', 'zip', 'city', 'state_id',
                   'country_id']
@@ -69,9 +65,9 @@ ADDRESS_FIELDS = ['street', 'street2', 'street3', 'zip', 'city', 'state_id',
 ADDRESS_DICT = {'physical_addresses': {
     'street': "%(street_computed)s",
     'city': "%(city)s",
-    'postal_code': "%(zipcode)s",
+    'zipcode': "%(zipcode)s",
     'state': "%(state)s",
-    'country_region': "%(country)s"}
+    'country': "%(country)s"}
     }
 
 
@@ -80,69 +76,52 @@ class PartnerExporter(ExchangeExporter):
     _model_name = ['exchange.res.partner']
 
     def fill_contact(self, contact, fields):
-        if fields is None:
+        contact.file_as_mapping = 'FirstSpaceLast'
+        if fields is None or fields == []:
             fields = (
                 SIMPLE_VALUE_FIELDS.keys() + RELATIONAL_VALUE_FIELDS.keys() +
-                MULTIPLE_VALUE_FIELDS.keys() + ADDRESS_FIELDS
+                ADDRESS_FIELDS + PHONE_VALUE_FIELDS.keys() + ['email']
                 )
 
         if 'lastname' in fields or 'firstname' in fields:
             fields.append('name')
-
         for f, v in SIMPLE_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
             odoo_value = getattr(self.binding, f)
             if not odoo_value:
-                odoo_value = None
+                continue
 
             if isinstance(v, list):
-                ff = getattr(contact, v[0])
-                for elem in v[1:]:
-                    ff = getattr(ff, elem)
-                ff.value = odoo_value
+                if hasattr(contact, v[0]):
+                    for elem in v[1:]:
+                        contact.__setattr__(elem, odoo_value)
             else:
-                getattr(contact, v).value = odoo_value
+                contact.__setattr__(v, odoo_value)
 
         for f, v in RELATIONAL_VALUE_FIELDS.iteritems():
             if fields is not None and f not in fields:
                 continue
             odoo_value = getattr(self.binding, f)
-            if odoo_value:
-                odoo_value = odoo_value.name
-            else:
-                odoo_value = None
+            if not odoo_value:
+                continue
 
             if isinstance(v, list):
-                ff = getattr(contact, v[0])
-                for elem in v[1:]:
-                    ff = getattr(ff, elem)
-                ff.value = odoo_value
+                if hasattr(contact, v[0]):
+                    ff = contact.__getattribute__(v[0])
+                    for elem in v[1:]:
+                        if hasattr(contact, elem):
+                            ff = contact.__getattribute__(elem)
+                        ff.__setattr__(elem, odoo_value.name)
             else:
-                getattr(contact, v).value = odoo_value
-
-        for f, v in MULTIPLE_VALUE_FIELDS.iteritems():
-            if fields is not None and f not in fields:
-                continue
-            odoo_value = getattr(self.binding, f)
-            if not odoo_value:
-                odoo_value = None
-
-            exchange_field = getattr(contact, v['exchange'])
-            not_found = True
-            for entry in exchange_field.entries:
-                if entry.attrib['Key'] == v['type']:
-                    not_found = False
-                    entry.value = odoo_value
-
-            if not_found:
-                exchange_field.add(v['type'], odoo_value)
+                contact.__setattr__(v, odoo_value.name)
 
         if set(ADDRESS_FIELDS) & set(fields):
+            # sync only Business address
             not_found = True
             if contact.physical_addresses:
-                for atype in contact.physical_addresses.entries:
-                    if atype.attrib['Key'] == PhysicalAddressType.Business:
+                for atype in contact.physical_addresses:
+                    if atype.label == 'Business':
                         not_found = False
                         subst = _compute_subst(self.binding)
 
@@ -151,62 +130,64 @@ class PartnerExporter(ExchangeExporter):
                             valu = valu % subst
                             if valu == 'False':
                                 valu = None
-                            getattr(atype, key).value = valu
+                            atype.__setattr__(key, valu)
 
             if not_found:
-                addr = PostalAddress()
-                addr.add_attrib('Key', PhysicalAddressType.Business)
-
                 subst = _compute_subst(self.binding)
-                for key, valu in ADDRESS_DICT[
-                        "physical_addresses"].iteritems():
-                    valu = valu % subst
-                    if valu == 'False':
-                        valu = None
-                    getattr(addr, key).value = valu
+                addrs = []
+                addr = PhysicalAddress(street=subst['street_computed'],
+                                       city=subst['city'],
+                                       country=subst['country'],
+                                       state='',
+                                       zipcode=subst['zipcode']
+                                       )
+                addr.label = "Business"
+                addrs.append(addr)
+                contact.physical_addresses = addrs
+        else:
+            if contact.physical_addresses:
+                for addr in contact.physical_addresses:
+                    for fi in addr.__slots__:
+                        if getattr(addr, fi) is None:
+                            setattr(addr, fi, ' ')
 
-                contact.physical_addresses.add(addr)
-
-    def check_folder_still_exists(self, folder_id):
-        """
-            Check if provided 'folder_id' still exists in Exchange.
-            If provided 'folder_id' is 'False', create a new one in Exchange
-            and fill information on 'res.users.backend.folder' object (if no
-            existing one in Exchange 'Contacts' folder, create).
-        """
-        br = self.binding
-        odoo_folder = br.user_id.find_folder(br.backend_id.id)
-        adapter = self.backend_adapter
-        folder = None
-        if folder_id:
-            folder = adapter.find_folder(odoo_folder)
-        if not folder:
-            folder = adapter.create_folder(odoo_folder)
-            odoo_folder.folder_id = folder.Id
-        return folder
+        if 'email' in fields:
+            contact.email_addresses = [EmailAddress(label='EmailAddress1',
+                                                    email=self.binding.email)]
+        phones_to_update = set(PHONE_VALUE_FIELDS.keys()) & set(fields)
+        if phones_to_update:
+            not_found = True
+            for f in list(phones_to_update):
+                if contact.phone_numbers:
+                    for mails_inst in contact.phone_numbers:
+                        if mails_inst.label == PHONE_VALUE_FIELDS[f]:
+                            not_found = False
+                            mails_inst.phone_number = getattr(self.binding, f)
+                if not_found:
+                    value = PhoneNumber(label=PHONE_VALUE_FIELDS[f],
+                                        phone_number=getattr(self.binding, f))
+                    if isinstance(contact.phone_numbers, list):
+                        contact.phone_numbers.append(value)
+                    else:
+                        contact.phone_numbers = [value]
+        return contact
 
     def _update_data(self, fields=None, **kwargs):
-        exchange_service = self.backend_adapter.ews
-        contact = exchange_service.GetContacts(
-            [self.binding.external_id])[0]
+        adapter = self.backend_adapter
+        account = adapter.get_account(self.openerp_user)
+        contact = account.contacts.get(id=self.binding.external_id)
         self.fill_contact(contact, fields)
-        # add Odoo category on create contact on exchange
-        contact.categories.add('Odoo')
-
+        contact.categories = ['Odoo']
         return contact
 
     def _create_data(self, fields=None):
-        exchange_service = self.backend_adapter.ews
-        parent_folder_id = self.check_folder_still_exists(
-            self.binding.current_folder
-            ).Id
-        contact = Contact(exchange_service, parent_folder_id)
-        self.fill_contact(contact, fields)
-        # add Odoo category on create contact on exchange
-        contact.categories.add('Odoo')
-        contact.file_as_mapping.value = 'FirstSpaceLast'
-
-        return contact, parent_folder_id
+        adapter = self.backend_adapter
+        account = adapter.get_account(self.openerp_user)
+        contact = Contact(account=account)
+        contact = self.fill_contact(contact, fields)
+        contact.categories = ['Odoo']
+        contact = account.bulk_create(folder=account.contacts, items=[contact])
+        return contact[0]
 
     def _update(self, record):
         """ Create the Exchange record """
@@ -221,22 +202,9 @@ class PartnerExporter(ExchangeExporter):
         return self.backend_adapter.create(folder, record)
 
     def get_exchange_record(self):
-        return self.backend_adapter.ews.GetContacts(
-            [self.binding.external_id])
-
-    def find_by_email(self):
-        """
-            search for an exchange record with same email as
-            the partner we try to export
-        """
-        parent_folder_id = self.check_folder_still_exists(
-            self.binding.current_folder
-        ).Id
-        response = self.backend_adapter.ews.SearchContactByEmail(
-            parent_folder_id,
-            self.binding.email)
-
-        return response
+        adapter = self.backend_adapter
+        account = adapter.get_account(self.openerp_user)
+        return account.contacts.get(id=self.binding.external_id)
 
     def run_delayed_import_of_exchange_contact(self, user_id,
                                                contact_instance):
@@ -251,12 +219,8 @@ class PartnerExporter(ExchangeExporter):
                 contact_instance.itemid)
 
     def create_exchange_contact(self, fields):
-        record, folder = self._create_data(fields=fields)
-        if not record:
-            return _('Nothing to export.')
-        Id, CK = self._create(folder, record)
-        self.binding.with_context(connector_no_export=True).write(
-            {'change_key': CK, 'external_id': Id})
+        record = self._create_data(fields=fields)
+        return record
 
     def update_existing(self, fields):
         record = self._update_data(fields=fields)
@@ -265,42 +229,58 @@ class PartnerExporter(ExchangeExporter):
         response = self._update(record)
         self.binding.with_context(
             connector_no_export=True).write(
-            {'change_key': response[0].change_key.value})
+            {'change_key': response.changekey})
 
     def change_key_equals(self, exchange_record):
         return (
-            exchange_record.change_key.value == self.binding.change_key)
+            exchange_record.changekey == self.binding.change_key)
 
     def _run(self, fields=None):
         assert self.binding
         user = self.binding.user_id
-        self.backend_adapter.set_primary_smtp_address(user)
-
+        self.openerp_user = user
+        adapter = self.backend_adapter
         if not self.binding.external_id:
             fields = None
 
         if not self.binding.external_id:
             # create contact in exchange
-            self.create_exchange_contact(fields)
+            exchange_record = self.create_exchange_contact(fields)
+            self.binding.external_id = exchange_record.id
+            self.binding.change_key = exchange_record.changekey
         else:
             # we have a binding
             # try to find an exchange contact with this binding ID
             exchange_record = self.get_exchange_record()
-            if exchange_record:
-                exchange_record = exchange_record[0]
+            # if record not found, create it.
+            if type(exchange_record) == type(Contact()):
+                exchange_record = exchange_record
                 # Compare change_keys of odoo binding and Exchange record found
                 if self.change_key_equals(exchange_record):
                     # update contact
                     self.update_existing(fields)
                 else:
                     # run a delayed import of this Exchange contact
-                    self.run_delayed_import_of_exchange_contact(
-                        user.id,
-                        exchange_record)
+                    # self.run_delayed_import_of_exchange_contact(
+                    #     user.id,
+                    #     exchange_record)
+                    #  todo uncomment delay part
+                    self.env['exchange.res.partner'].import_record(
+                        self.backend_record,
+                        user,
+                        exchange_record.item_id)
             else:
+                # if not self.external_id:
+                #     _logger.debug('deleted --> UNLINK')
+                #     rid = self.binding.openerp_id
+                #     self.binding.openerp_id.with_context(
+                #         connector_no_export=True).unlink()
+                #     return _("Record deleted with ID %s on Exchange") % (rid)
+                # else:
                 # create contact in exchange and update its `external_id`
-                self.create_exchange_contact(fields)
-
+                exchange_record = self.create_exchange_contact(fields)
+                self.binding.external_id = exchange_record.id
+                self.binding.change_key = exchange_record.changekey
         return _("Record exported with ID %s on Exchange") % (
             self.binding.external_id)
 
@@ -312,50 +292,16 @@ class PartnerDisabler(ExchangeDisabler):
     def get_exchange_record(self, external_id):
         return self.backend_adapter.ews.GetContacts([external_id])
 
-    def check_folder_still_exists(self, folder_id, user):
-        """
-            Check if provided 'folder_id' still exists in Exchange.
-            If provided 'folder_id' is 'False', create a new one in Exchange
-            and fill information on 'res.users.backend.folder' object (if no
-            existing one in Exchange 'Contacts' folder, create).
-        """
-        odoo_folder = user.find_folder(self.backend_record.id,
-                                       create=True,
-                                       default_name='Odoo Deleted',
-                                       folder_type='delete')
-        adapter = self.backend_adapter
-        folder = None
-        if folder_id:
-            folder = adapter.find_folder(odoo_folder)
-        if not folder:
-            folder = adapter.create_folder(odoo_folder)
-            odoo_folder.folder_id = folder.Id
-        return folder
-
-    def move_contact(self, contact_id, user_rec):
+    def move_contact(self, contact_id, account):
         """
             move contact to "Odoo Deleted" Folder.
         """
-        ews_service = self.backend_adapter.ews
-        ews_service.get_root_folder()
+        contact = account.calendar.get(id=contact_id)
+        contact.delete()
 
-        deleted_folder = user_rec.find_folder(
-            self.backend_record.id,
-            create=True,
-            default_name='Odoo Deleted',
-            folder_type='delete')
-
-        folder = self.check_folder_still_exists(deleted_folder.folder_id,
-                                                user_rec).Id
-
-        if folder:
-            ews_service.MoveItems(folder, [contact_id])
-        else:
-            raise FailedJobError(
-                _('Unable to find folder %s in Exchange' % deleted_folder.name)
-                )
-
-    def _run(self, external_id, user):
+    def _run(self, external_id, user_id):
         """ Implementation of the deletion """
-        self.backend_adapter.set_primary_smtp_address(user)
-        self.move_contact(external_id, user)
+        # search for correct user
+        adapter = self.backend_adapter
+        account = adapter.get_account(user_id)
+        self.move_contact(external_id, account)

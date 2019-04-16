@@ -1,3 +1,4 @@
 git+https://github.com/camptocamp/pyews.git@PyEWS_Events_Management
+exchangelib
 vcrpy>=1.10.5
 contextlib2>=0.5.4

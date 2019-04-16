@@ -6,7 +6,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {'name': 'Connector Exchange',
- 'version': '10.0.1.0.0',
+ 'version': '10.0.2.0.0',
  'author': "Camptocamp, Nicolas Clavier, Odoo Community Association (OCA)",
  'website': "http://www.camptocamp.com",
  'summary': "Microsoft Exchange Connector",
@@ -15,12 +15,13 @@
  'category': 'Connector',
  'depends': ['base',
              'calendar',
+             'crm',
              'connector',
              'partner_changeset',
              'partner_firstname',
              'partner_address_street3',
              ],
- 'external_dependencies': {'python': ['pyews', 'vcr', 'contextlib2']},
+ 'external_dependencies': {'python': ['exchangelib', 'vcr', 'contextlib2']},
  'data': ['security/ir.model.access.csv',
           'views/connector_exchange_menu.xml',
           'views/exchange_backend_views.xml',

@@ -9,13 +9,9 @@ from odoo import models, fields, api, _
 
 
 _logger = logging.getLogger(__name__)
-try:
-    from pyews.pyews import ExchangeService
-    from pyews.soap import SoapClient
-    from pyews.ews.data import WellKnownFolderName
-except (ImportError, IOError) as err:
-    _logger.debug(err)
 
+from ..res_partner.adapter import PartnerBackendAdapter
+from ..calendar_event.adapter import EventBackendAdapter
 
 class ResCompany(models.Model):
     _inherit = 'res.company'
@@ -96,32 +92,6 @@ class ResUsers(models.Model):
     last_calendar_sync_date = fields.Date(
         default=_get_last_calendar_sync_date
     )
-    import_only_odoo_calendar_events = fields.Boolean(default=True)
-
-    @api.onchange('exchange_synch', 'exchange_calendar_sync')
-    def create_odoo_category(self):
-        """
-        Try to create odoo category on Exchange.
-        If it already exists, do nothing
-        """
-        # find exchange backend
-        ex_backends = self.default_backend
-        if ex_backends:
-            back = ex_backends
-            ews = ExchangeService()
-            ews.soap = SoapClient(back.location,
-                                  back.username,
-                                  back.password,
-                                  back.certificate_location)
-            subst = {
-                'u_login': self.login,
-                'exchange_suffix': self.company_id.exchange_suffix or '',
-            }
-            ews.primary_smtp_address = (
-                str("%(u_login)s%(exchange_suffix)s" % subst)
-            )
-            # envoyer requete
-            ews.UpdateCategoryList('Odoo', 23, WellKnownFolderName.Calendar)
 
     @api.multi
     def find_folder(self, backend_id, create=True,

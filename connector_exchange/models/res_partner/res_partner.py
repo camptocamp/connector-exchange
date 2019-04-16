@@ -31,17 +31,26 @@ class ResPartner(models.Model):
             Try to find a binding with provided backend and user.
             If not found, create a new one.
         """
-        if user.exchange_sync:
-            for partner in self:
-                bindings = partner.exchange_bind_ids.filtered(
-                    lambda a: a.backend_id == backend and a.user_id == user)
-                if not bindings:
-                    self.env['exchange.res.partner'].create(
-                        {'backend_id': backend.id,
-                         'user_id': user.id,
-                         'openerp_id': partner.id}
-                    )
+        for partner in self:
+            bindings = partner.exchange_bind_ids.filtered(
+                lambda a: a.backend_id == backend and a.user_id == user)
+            if not bindings:
+                bindings = self.env['exchange.res.partner'].create(
+                    {'backend_id': backend.id,
+                     'user_id': user.id,
+                     'openerp_id': partner.id}
+                )
+            for b in bindings:
+                b.export_record()
         return True
+
+    @api.multi
+    def unlink(self):
+        for rec in self:
+            for binding in rec.exchange_bind_ids:
+                binding.export_delete_record(
+                    binding.external_id, binding.user_id)
+        super(ResPartner, self).unlink()
 
 
 class ExchangeResPartner(models.Model):

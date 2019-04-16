@@ -35,6 +35,7 @@ install:
   - git clone --depth=1 https://github.com/OCA/maintainer-quality-tools.git ${HOME}/maintainer-quality-tools
   - export PATH=${HOME}/maintainer-quality-tools/travis:${PATH}
   - travis_install_nightly
+  - pip install git+https://github.com/ecederstrand/exchangelib.git
   - pip install git+https://github.com/damdam-s/pyews.git@PyEWS_Events_Management
   - pip install git+https://github.com/martinblech/xmltodict.git@d5fcf8b8863d1472af08415cb8da698d830c12d2
   - pip install -r requirements.txt

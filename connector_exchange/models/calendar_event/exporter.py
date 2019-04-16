@@ -16,18 +16,10 @@ from ...backend import exchange_2010
 _logger = logging.getLogger(__name__)
 _logger = logging.getLogger(__name__)
 
-try:
-    from pyews.ews.calendar import CalendarItem, Attendee
-    from pyews.ews.data import (SensitivityType,
-                                LegacyFreeBusyStatusType,
-                                DaysOfWeekBaseType,
-                                DayOfWeekIndexType,
-                                MonthRecurrenceType,
-                                ResponseTypeType,
-                                )
-except (ImportError, IOError) as err:
-    _logger.debug(err)
-
+from exchangelib import EWSDate, EWSDateTime, EWSTimeZone, Mailbox, Attendee, \
+    CalendarItem, fields
+from exchangelib.items import SEND_ONLY_TO_ALL, SEND_ONLY_TO_CHANGED
+import pytz
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
@@ -37,18 +29,18 @@ EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
 
 def get_exchange_month_from_date(month):
     maps = {
-        1: MonthRecurrenceType.January,
-        2: MonthRecurrenceType.February,
-        3: MonthRecurrenceType.March,
-        4: MonthRecurrenceType.April,
-        5: MonthRecurrenceType.May,
-        6: MonthRecurrenceType.June,
-        7: MonthRecurrenceType.July,
-        8: MonthRecurrenceType.August,
-        9: MonthRecurrenceType.September,
-        10: MonthRecurrenceType.October,
-        11: MonthRecurrenceType.November,
-        12: MonthRecurrenceType.December,
+        1: fields.January,
+        2: fields.February,
+        3: fields.March,
+        4: fields.April,
+        5: fields.May,
+        6: fields.June,
+        7: fields.July,
+        8: fields.August,
+        9: fields.September,
+        10: fields.October,
+        11: fields.November,
+        12: fields.December,
     }
     return maps[month]
 
@@ -77,7 +69,7 @@ SIMPLE_VALUE_FIELDS = {'name': 'subject',
 class CalendarEventExporter(ExchangeExporter):
     _model_name = ['exchange.calendar.event']
 
-    def fill_privacy(self, calendar):
+    def fill_privacy(self, event):
         """
         Here is the mapping between Odoo and Exchange:
         | Odoo         | Exchange     |
@@ -87,13 +79,13 @@ class CalendarEventExporter(ExchangeExporter):
         | confidential | Confidential |
         """
         if self.binding['privacy'] == 'public':
-            calendar.sensitivity.set(SensitivityType.Normal)
+            event.sensitivity = 'Normal'
         elif self.binding['privacy'] == 'confidential':
-            calendar.sensitivity.set(SensitivityType.Confidential)
+            event.sensitivity = 'Confidential'
         else:
-            calendar.sensitivity.set(SensitivityType.Private)
+            event.sensitivity = 'Private'
 
-    def fill_free_busy_status(self, calendar):
+    def fill_free_busy_status(self, event):
         """
         Here is the mapping between Odoo and Exchange:
         | Odoo | Exchange     |
@@ -104,11 +96,11 @@ class CalendarEventExporter(ExchangeExporter):
         | busy | Tentative    |
         """
         if self.binding.show_as == 'free':
-            calendar.legacy_free_busy_status.set(LegacyFreeBusyStatusType.Free)
+            event.legacy_free_busy_status = 'Free'
         else:
-            calendar.legacy_free_busy_status.set(LegacyFreeBusyStatusType.Busy)
+            event.legacy_free_busy_status = 'Busy'
 
-    def fill_reminder(self, calendar):
+    def fill_reminder(self, event):
         """
         In Exchange, only one reminder can be set.
         So Odoo side, only the first reminder will be exported to Exchange.
@@ -116,47 +108,54 @@ class CalendarEventExporter(ExchangeExporter):
         alarms = self.binding.alarm_ids
         if alarms:
             alarm = alarms[0]
-            calendar.is_reminder_set.set(True)
-            calendar.reminder_due_by.set(convert_to_exchange(
-                self.binding.start, time=True)
-            )
-            calendar.reminder_minutes_before_start.set(alarm.duration_minutes)
+            event.is_reminder_set = True
+            event.reminder_due_by = convert_to_exchange(
+                self.parse_date(self.binding.start), time=True)
+            event.reminder_minutes_before_start = alarm.duration_minutes
         else:
-            calendar.is_reminder_set.set(False)
+            event.is_reminder_set = False
 
-    def fill_start_end(self, calendar):
+    def parse_date(self, dt, all_day=False, end=False, user_tz=False):
+        tz = EWSTimeZone.timezone('UTC')
+        if all_day:
+            tz = user_tz
+        dt = datetime.datetime.strptime(
+            dt, DEFAULT_SERVER_DATETIME_FORMAT)
+
+        odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
+                              dt.minute))
+        return odt
+
+    def fill_start_end(self, event):
+        event.is_all_day = self.binding.allday
         if self.binding.allday:
-            calendar.is_all_day_event.set(True)
-            calendar.start.set(convert_to_exchange(
-                self.binding.start_date)
-            )
-            calendar.end.set(convert_to_exchange(
-                self.binding.stop_date)
-            )
+            start = self.parse_date(self.binding.start,
+                                    all_day=self.binding.allday, user_tz=event.account.default_timezone)
+            stop = self.parse_date(self.binding.stop,
+                                   all_day=self.binding.allday, user_tz=event.account.default_timezone)
         else:
-            calendar.is_all_day_event.set(False)
-            calendar.start.set(convert_to_exchange(
-                self.binding.start, time=True)
-            )
-            calendar.end.set(convert_to_exchange(
-                self.binding.stop, time=True)
-            )
+            start = self.parse_date(self.binding.start,
+                                    all_day=self.binding.allday)
+            stop = self.parse_date(self.binding.stop,
+                                   all_day=self.binding.allday)
+        event.start = start
+        event.end = stop
 
-    def _attendee_already_exists(self, attendee_email, calendar):
+    def _attendee_already_exists(self, attendee_email, event):
         """
         try to find an attendee in the calendar with same email address
         """
         result = False
-
-        for att in calendar.required_attendees.entries:
-            att_mail = att.mailbox.email_address.value
+        if event.required_attendees:
+            att = event.required_attendees
+            att_mail = att.mailbox.email_address
             if (att_mail == attendee_email or
                     att_mail == self.openerp_user.email):
                 return True
 
         return result
 
-    def fill_attendees(self, calendar):
+    def fill_attendees(self, event):
         """
         For each attendee in Odoo:
             if there is not already an attendee with the same email address:
@@ -164,35 +163,34 @@ class CalendarEventExporter(ExchangeExporter):
                 - add it in required_attendees of the meeting.
         """
         STATES_MAPPING = {
-            'tentative': ResponseTypeType.Tentative,
-            'declined': ResponseTypeType.Decline,
-            'accepted': ResponseTypeType.Accept,
+            'tentative': 'Tentative',
+            'declined': 'Decline',
+            'accepted': 'Accept',
         }
         for attendee in self.binding.attendee_ids:
             if attendee.email == self.openerp_user.email:
                 continue
             # cn, email
-            for att in calendar.required_attendees.entries:
-                if att.mailbox.email_address.value == attendee.email:
-                    att.response_type.value = (
-                        STATES_MAPPING.get(attendee.state,
-                                           ResponseTypeType.Unknown)
-                    )
+            if event.required_attendees:
+                att = event.required_attendees
+                if att.mailbox.email_address == attendee.email:
+                    att.response_type = \
+                        STATES_MAPPING.get(attendee.state, 'Unknown')
             if (not self._attendee_already_exists(
-                    attendee.email, calendar)):
-                att = Attendee()
-                att.mailbox.name.set(attendee.common_name)
-                att.mailbox.email_address.set(attendee.email)
-                att.response_type.set(
-                    STATES_MAPPING.get(attendee.state,
-                                       ResponseTypeType.Unknown)
+                    attendee.email, event)):
+                att = Attendee(
+                    mailbox=Mailbox(email_address=attendee.email,
+                                    name=attendee.common_name,
+                                    ),
+                    response_type='Accept',
                 )
-                calendar.required_attendees.add(att)
 
-    def fill_recurrency(self, calendar):
+                event.required_attendees = att
+
+    def fill_recurrency(self, event):
         """
         If Odoo event is recurrent, fill recurrency options
-        in `calendar` Exchange object.
+        in `event` Exchange object.
 
         Odoo only supports numbered_recurrence and end_date recurrence.
         """
@@ -200,42 +198,42 @@ class CalendarEventExporter(ExchangeExporter):
         if evt.recurrency:
 
             if evt.end_type == "count":
-                calendar.recurrence.numbered_rec.nb_occurrences.set(evt.count)
+                event.recurrence.numbered_rec.nb_occurrences.set(evt.count)
                 if self.binding.allday:
-                    calendar.recurrence.numbered_rec.start_date.set(
+                    event.recurrence.numbered_rec.start_date.set(
                         convert_to_exchange(self.binding.start_date,
                                             time=False, rec=True)
                     )
                 else:
-                    calendar.recurrence.numbered_rec.start_date.set(
+                    event.recurrence.numbered_rec.start_date.set(
                         convert_to_exchange(self.binding.start_datetime,
                                             time=True, rec=True)
                     )
             else:
                 # end_date recurrency
-                calendar.recurrence.end_date_rec.start_date(
+                event.recurrence.end_date_rec.start_date(
                     convert_to_exchange(self.binding.start_date,
                                         time=False, rec=True))
-                calendar.recurrence.end_date_rec.end_date(
+                event.recurrence.end_date_rec.end_date(
                     convert_to_exchange(self.binding.final_date,
                                         time=False, rec=True))
 
             ExchangeDays = {
-                'mo': DaysOfWeekBaseType.Monday,
-                'tu': DaysOfWeekBaseType.Tuesday,
-                'we': DaysOfWeekBaseType.Wednesday,
-                'th': DaysOfWeekBaseType.Thursday,
-                'fr': DaysOfWeekBaseType.Friday,
-                'sa': DaysOfWeekBaseType.Saturday,
-                'su': DaysOfWeekBaseType.Sunday,
+                'mo': fields.Monday,
+                'tu': fields.Tuesday,
+                'we': fields.Wednesday,
+                'th': fields.Thursday,
+                'fr': fields.Friday,
+                'sa': fields.Saturday,
+                'su': fields.Sunday,
             }
 
             interval_rec = evt.interval
             if evt.rrule_type == 'daily':
-                calendar.recurrence.day_rec.interval.set(interval_rec)
+                event.recurrence.day_rec.interval.set(interval_rec)
 
             elif evt.rrule_type == 'weekly':
-                weekly = calendar.recurrence.week_rec
+                weekly = event.recurrence.week_rec
                 days = []
                 for day in ExchangeDays:
                     if getattr(evt, day):
@@ -244,32 +242,32 @@ class CalendarEventExporter(ExchangeExporter):
                 days = ' '.join(days)
                 weekly.days_of_week.set(days)
                 weekly.interval.set(interval_rec)
-                weekly.first_day_of_week.set(DaysOfWeekBaseType.Monday)
+                weekly.first_day_of_week.set(fields.Monday)
 
             elif evt.rrule_type == 'monthly':
                 if evt.month_by == 'date':
                     # AbsoluteMonthlyRecurrence
-                    calendar.abs_month_rec.interval.set(interval_rec)
-                    calendar.abs_month_rec.day_of_month.set(evt.day)
+                    event.abs_month_rec.interval.set(interval_rec)
+                    event.abs_month_rec.day_of_month.set(evt.day)
 
                 else:
                     # evt.month_by = 'day'
                     # RelativeMonthlyRecurrence
-                    calendar.rel_month_rec.interval.set(interval_rec)
-                    calendar.rel_month_rec.days_of_week.set(
+                    event.rel_month_rec.interval.set(interval_rec)
+                    event.rel_month_rec.days_of_week.set(
                         ExchangeDays[evt.week_list.lower()]
                     )
 
                     ExchangeIndex = {
-                        '1': DayOfWeekIndexType.First,
-                        '2': DayOfWeekIndexType.Second,
-                        '3': DayOfWeekIndexType.Third,
-                        '4': DayOfWeekIndexType.Fourth,
-                        '5': DayOfWeekIndexType.Last,
-                        '-1': DayOfWeekIndexType.Last,
+                        '1': fields.First,
+                        '2': fields.Second,
+                        '3': fields.Third,
+                        '4': fields.Fourth,
+                        '5': fields.Last,
+                        '-1': fields.Last,
                     }
 
-                    calendar.rel_month_rec.day_of_week_index.set(
+                    event.rel_month_rec.day_of_week_index.set(
                         ExchangeIndex[evt.byday]
                     )
 
@@ -281,12 +279,12 @@ class CalendarEventExporter(ExchangeExporter):
                         fields.Datetime.from_string(evt.start_datetime)
                         )
 
-                calendar.abs_year_rec.day_of_month.set(date.day)
-                calendar.abs_year_rec.month.set(
+                event.abs_year_rec.day_of_month.set(date.day)
+                event.abs_year_rec.month.set(
                     get_exchange_month_from_date(date.month)
                 )
 
-    def fill_calendar_event(self, calendar, fields):
+    def fill_calendar_event(self, event, fields=None):
         """
 
         """
@@ -298,74 +296,40 @@ class CalendarEventExporter(ExchangeExporter):
                 continue
             odoo_value = getattr(self.binding, f)
             if not odoo_value:
-                odoo_value = None
+                continue
+            event.__setattr__(v, odoo_value)
 
-            if isinstance(v, list):
-                ff = getattr(calendar, v[0])
-                for elem in v[1:]:
-                    ff = getattr(ff, elem)
-                ff.value = odoo_value
-            else:
-                getattr(calendar, v).value = odoo_value
+        self.fill_start_end(event)
+        self.fill_privacy(event)
+        self.fill_free_busy_status(event)
+        self.fill_reminder(event)
+        self.fill_attendees(event)
+        self.fill_recurrency(event)
+        return event
 
-        self.fill_start_end(calendar)
-        self.fill_privacy(calendar)
-        self.fill_free_busy_status(calendar)
-        self.fill_reminder(calendar)
-        self.fill_attendees(calendar)
-        self.fill_recurrency(calendar)
-
-    def check_folder_still_exists(self, folder_id):
-        """
-            Check if provided 'folder_id' still exists in Exchange.
-            If provided 'folder_id' is 'False', create a new one in Exchange
-            and fill information on 'res.users.backend.folder' object (if no
-            existing one in Exchange 'Calendar' folder, create).
-        """
-        br = self.binding
-        odoo_folder = br.user_id.find_folder(br.backend_id.id, create=True,
-                                             folder_type='calendar')
-        adapter = self.backend_adapter
-        folder = None
-        if folder_id:
-            folder = adapter.find_folder(odoo_folder)
-        if not folder:
-            folder = adapter.find_folder(odoo_folder)
-            odoo_folder.folder_id = folder.Id
-        return folder
-
-    def _update_data(self, fields=None, **kwargs):
-        exchange_service = self.backend_adapter.ews
-        calendar = exchange_service.GetCalendarItems(
-            [self.binding.external_id])[0]
-        self.fill_calendar_event(calendar, fields)
-        calendar.categories.add('Odoo')
-
+    def _update_data(self, event=None, fields=None, **kwargs):
+        record = self.fill_calendar_event(event, fields)
+        event.categories = ['Odoo']
         if self.binding.send_calendar_invitations:
-            calendar.is_draft = True
-        return calendar
+            record.is_draft = True
+        return record
 
     def _create_data(self, fields=None):
-        exchange_service = self.backend_adapter.ews
-        parent_folder_id = self.check_folder_still_exists(
-            self.binding.calendar_folder
-        ).Id
-        calendar = CalendarItem(exchange_service, parent_folder_id)
-        self.fill_calendar_event(calendar, fields)
-        # add Odoo category on create calendar on exchange
-        calendar.categories.add('Odoo')
-
-        if self.binding.send_calendar_invitations:
-            calendar.is_draft = True
-
-        return calendar, parent_folder_id
+        adapter = self.backend_adapter
+        account = adapter.get_account(self.openerp_user)
+        event = CalendarItem(account=account)
+        event = self.fill_calendar_event(event, fields)
+        event.categories = ['Odoo']
+        record = account.bulk_create(folder=account.calendar, items=[event])
+        # add Odoo category on create calendar on exchange todo
+        return record[0]
 
     def _update(self, record):
         """ Create the Exchange record """
         # special check on data before export
         self._validate_update_data(record)
         return self.backend_adapter.write(
-            self.external_id,
+            self.binding.external_id,
             record,
             self.binding.send_calendar_invitations)
 
@@ -377,9 +341,8 @@ class CalendarEventExporter(ExchangeExporter):
             folder, record,
             self.binding.send_calendar_invitations)
 
-    def get_exchange_record(self):
-        return self.backend_adapter.ews.GetCalendarItems(
-            [self.binding.external_id])
+    def get_exchange_record(self, account, external_id):
+        return account.calendar.get(id=external_id)
 
     def run_delayed_import_of_exchange_calendar_event(self, user_id,
                                                       calendar_event_instance):
@@ -390,66 +353,64 @@ class CalendarEventExporter(ExchangeExporter):
         return self.env['exchange.calendar.event'].with_delay().import_record(
             self.backend_record,
             user,
-            calendar_event_instance.itemid,
+            calendar_event_instance.item_id,
             priority=30)
 
     def run_delayed_delete_of_exchange_calendar_event(self, user_id,
                                                       calendar_event_instance):
-        user = self.env['res.users'].browse(user_id)
         return self.backend_record.with_delay().export_delete_record(
-            calendar_event_instance.itemid.value,
-            user,
+            calendar_event_instance.item_id,
+            self.openerp_user,
             priority=30)
 
     def create_exchange_calendar_event(self, fields):
-        record, folder = self._create_data(fields=fields)
-        if not record:
-            return _('Nothing to export.')
-        Id, CK = self._create(folder, record)
-        self.binding.with_context(connector_no_export=True).write(
-            {'change_key': CK, 'external_id': Id})
+        record = self._create_data(fields=fields)
+        return record
 
-    def update_existing(self, fields):
-        record = self._update_data(fields=fields)
+    def update_existing(self, event, fields):
+        record = self._update_data(event=event, fields=fields)
         if not record:
             return _('Nothing to export.')
         response = self._update(record)
         self.binding.with_context(
             connector_no_export=True).write(
-            {'external_id': response[0].itemid.value,  # in case of convertId
-             'change_key': response[0].change_key.value})
+            {'external_id': response.item_id,  # in case of convertId
+             'change_key': response.changekey})
 
     def change_key_equals(self, exchange_record):
         return (
-            exchange_record.change_key.value == self.binding.change_key)
+            exchange_record.changekey == self.binding.change_key)
 
     def _run(self, fields=None):
         assert self.binding
         user = self.binding.user_id
         self.openerp_user = user
-        self.backend_adapter.set_primary_smtp_address(user)
         external_id = self.binding.external_id
         if not external_id:
             fields = None
 
         if not external_id:
-            self.create_exchange_calendar_event(fields)
+            exchange_record = self.create_exchange_calendar_event(fields)
+            self.binding.external_id = exchange_record.id
+            self.binding.change_key = exchange_record.changekey
         else:
+            adapter = self.backend_adapter
+            account = adapter.get_account(self.openerp_user)
             # we have a binding
-            # try to find an exchange event with this binding ID
-            exchange_record = self.get_exchange_record()
+            # try to find an exchange event with tord(account)
+            exchange_record = account.calendar.get(id=external_id)
             if exchange_record:
-                exchange_record = exchange_record[0]
                 # Compare change_keys of odoo binding and
                 # Exchange record found
                 if self.change_key_equals(exchange_record):
                     # update contact
-                    self.update_existing(fields)
+                    self.update_existing(exchange_record, fields)
                 else:
                     # run a delayed import of this Exchange contact
                     self.run_delayed_import_of_exchange_calendar_event(
                         user.id,
                         exchange_record)
+
             else:
                 # binding defined in Odoo but does not exist anymore
                 # in Exchange --> delete it from Odoo
@@ -457,35 +418,47 @@ class CalendarEventExporter(ExchangeExporter):
                     connector_no_export=True).unlink()
                 return
 
-        return _("Record exported with ID %s on Exchange") % external_id
+        return _("Record exported with ID %s on Exchange") % \
+            self.binding.external_id
+
+    def delete_calendar_event(self, external_id, account):
+        """
+        delete calendar item from exchange
+        """
+        event = account.calendar.get(id=external_id)
+        if event.send_calendar_invitations:
+            invit = "SendToAllAndSaveCopy"
+            CalendarItem.DeleteItem(
+                [external_id],
+                send_meeting_cancellations=invit)
+        event.delete()
+        return _("Record with ID %s deleted on Exchange") % external_id
 
 
 @exchange_2010
 class CalendarEventDisabler(ExchangeDisabler):
     _model_name = ['exchange.calendar.event']
 
-    def get_exchange_record(self, external_id):
-        return self.backend_adapter.ews.GetCalendarItems([external_id])
-
-    def delete_calendar_event(self, external_id, user):
+    def delete_calendar_event(self, external_id, account):
         """
         delete calendar item from exchange
         """
-        invit = "SendToNone"
-        event = self.env['exchange.calendar.event'].search(
-            [('external_id', '=', external_id)], limit=1
-        )
-        if event.send_calendar_invitations:
-
-            invit = "SendToAllAndSaveCopy"
-        self.backend_adapter.ews.DeleteCalendarItems(
-            [external_id],
-            send_meeting_cancellations=invit)
+        if not external_id:
+            return _("Record does not exists in exchange")
+        if self.env.context.get('connector_no_export'):
+            return
+        event = account.calendar.get(id=external_id)
+        try:
+            event.delete(send_meeting_cancellations=SEND_ONLY_TO_ALL)
+        except AttributeError as exp:
+            return _(
+                "Seems event with ID %s has already been deleted in Exchange"
+            ) % external_id
         return _("Record with ID %s deleted on Exchange") % external_id
 
     def _run(self, external_id, user_id):
         """ Implementation of the deletion """
         # search for correct user
-        user = self.env['res.users'].browse(user_id)
-        self.backend_adapter.set_primary_smtp_address(user)
-        self.delete_calendar_event(external_id, user)
+        adapter = self.backend_adapter
+        account = adapter.get_account(user_id)
+        self.delete_calendar_event(external_id, account)
