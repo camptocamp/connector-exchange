@@ -5,7 +5,8 @@
 
 import logging
 from odoo.addons.connector.unit.backend_adapter import BackendAdapter
-from exchangelib import IMPERSONATION, Account, Credentials, ServiceAccount, Configuration, NTLM, EWSTimeZone
+from exchangelib import (IMPERSONATION, Account, Credentials, ServiceAccount,
+                         Configuration, NTLM, EWSTimeZone)
 from exchangelib.protocol import BaseProtocol, NoVerifyHTTPAdapter
 
 

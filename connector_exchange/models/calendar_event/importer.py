@@ -12,7 +12,9 @@ from ...backend import exchange_2010
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
-from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
+from odoo.tools import (DEFAULT_SERVER_DATETIME_FORMAT,
+                        DEFAULT_SERVER_DATE_FORMAT,
+                        )
 
 from exchangelib import fields as ex_fields
 
@@ -43,7 +45,6 @@ class CalendarEventImporter(ExchangeImporter):
 
     def fill_start_end(self, event_instance):
         vals = {}
-        user_tz = self.openerp_user.tz
         if event_instance.is_all_day:
             # fill start_date and stop_date
             vals['allday'] = True

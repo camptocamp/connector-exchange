@@ -57,11 +57,9 @@ class CalendarEvent(models.Model):
                     a['privacy'] != 'private')
                 if not bindings:
                     bindings = self.env['exchange.calendar.event'].sudo(
-                    ).create(
-                       {'backend_id': backend.id,
-                        'user_id': user.id,
-                        'openerp_id': calendar.id}
-                    )
+                    ).create({'backend_id': backend.id,
+                              'user_id': user.id,
+                              'openerp_id': calendar.id})
                 for b in bindings:
                     b.export_record()
         return True

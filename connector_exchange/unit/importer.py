@@ -19,15 +19,14 @@ import logging
 import odoo
 from odoo import SUPERUSER_ID
 from odoo.addons.connector.connector import ConnectorUnit
-from odoo.addons.queue_job.exception import FailedJobError
+# from odoo.addons.queue_job.exception import FailedJobError
 from odoo.addons.connector.unit.synchronizer import Importer
-from odoo import _
 
 from ..backend import exchange_2010
 
-_logger = logging.getLogger(__name__)
-
 from contextlib import closing, contextmanager
+
+_logger = logging.getLogger(__name__)
 
 RETRY_ON_ADVISORY_LOCK = 1  # seconds
 RETRY_WHEN_CONCURRENT_DETECTED = 1  # seconds
@@ -254,12 +253,12 @@ class ExchangeImporter(Importer):
         """
         self.openerp_user = user
         self.external_id = item_id
-        lock_name = 'import({}, {}, {}, {})'.format(
-            self.backend_record._name,
-            self.backend_record.id,
-            self.model._name,
-            self.external_id,
-        )
+        # lock_name = 'import({}, {}, {}, {})'.format(
+        #     self.backend_record._name,
+        #     self.backend_record.id,
+        #     self.model._name,
+        #     self.external_id,
+        # )
         # Keep a lock on this import until the transaction is committed
         # self.advisory_lock_or_retry(lock_name,
         #                             retry_seconds=RETRY_ON_ADVISORY_LOCK)
@@ -320,19 +319,19 @@ class ExchangeImporter(Importer):
     def _map_data(self):
         raise NotImplementedError('Must be implemented in subclasses')
 
-    def move_contact(self, contact_id):
-        ews_service = self.backend_adapter.ews
-        ews_service.get_root_folder()
-        contact_folder = ews_service.root_folder.FindFolderByDisplayName(
-            "Contacts",
-            types=[FolderClass.Contacts])
-        if contact_folder:
-            contact_folder = contact_folder[0]
-            ews_service.MoveItems(contact_folder.Id, [contact_id])
-        else:
-            raise FailedJobError(
-                _('Unable to find folder "Contacts" in Exchange')
-            )
+    # def move_contact(self, contact_id):
+    #     ews_service = self.backend_adapter.ews
+    #     ews_service.get_root_folder()
+    #     contact_folder = ews_service.root_folder.FindFolderByDisplayName(
+    #         "Contacts",
+    #         types=[FolderClass.Contacts])
+    #     if contact_folder:
+    #         contact_folder = contact_folder[0]
+    #         ews_service.MoveItems(contact_folder.Id, [contact_id])
+    #     else:
+    #         raise FailedJobError(
+    #             _('Unable to find folder "Contacts" in Exchange')
+    #         )
 
 
 def add_checkpoint(env, model_name, record_id,

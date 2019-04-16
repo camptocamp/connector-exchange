@@ -7,11 +7,8 @@ import logging
 from datetime import timedelta
 from odoo import models, fields, api, _
 
-
 _logger = logging.getLogger(__name__)
 
-from ..res_partner.adapter import PartnerBackendAdapter
-from ..calendar_event.adapter import EventBackendAdapter
 
 class ResCompany(models.Model):
     _inherit = 'res.company'
