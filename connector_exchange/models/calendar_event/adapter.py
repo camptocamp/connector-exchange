@@ -8,7 +8,11 @@ from ...backend import exchange_2010
 
 
 _logger = logging.getLogger(__name__)
-from exchangelib import FolderCollection
+
+try:
+    from exchangelib import FolderCollection
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 @exchange_2010
@@ -19,7 +23,7 @@ class EventBackendAdapter(ExchangeAdapter):
         invit = "SendToNone"
         if send_calendar_invitations:
             invit = "SendToAllAndSaveCopy"
-
+        exchange_obj.send_meeting_invitations = invit
         return self.account.bulk_create(
             folder=self.account.calendar,
             items=exchange_obj)

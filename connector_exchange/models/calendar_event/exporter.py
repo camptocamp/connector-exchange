@@ -5,28 +5,28 @@
 
 import logging
 import datetime
-from odoo import _, fields
+from odoo import _
+from odoo import fields as odoo_fields
 from odoo.tools import (DEFAULT_SERVER_DATE_FORMAT,
                         DEFAULT_SERVER_DATETIME_FORMAT)
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
 
-
-_logger = logging.getLogger(__name__)
 _logger = logging.getLogger(__name__)
 
-from exchangelib import EWSDate, EWSDateTime, EWSTimeZone, Mailbox, Attendee, \
-    CalendarItem, fields
-from exchangelib.items import SEND_ONLY_TO_ALL, SEND_ONLY_TO_CHANGED
-import pytz
+try:
+    from exchangelib import (EWSDateTime, EWSTimeZone, Mailbox, Attendee,
+                             CalendarItem, fields)
+    from exchangelib.items import SEND_ONLY_TO_ALL
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
 
+
 # UTILITY FUNTIONS
-
-
 def get_exchange_month_from_date(month):
     maps = {
         1: fields.January,
@@ -123,16 +123,18 @@ class CalendarEventExporter(ExchangeExporter):
             dt, DEFAULT_SERVER_DATETIME_FORMAT)
 
         odt = tz.localize(EWSDateTime(dt.year, dt.month, dt.day, dt.hour,
-                              dt.minute))
+                                      dt.minute))
         return odt
 
     def fill_start_end(self, event):
         event.is_all_day = self.binding.allday
         if self.binding.allday:
             start = self.parse_date(self.binding.start,
-                                    all_day=self.binding.allday, user_tz=event.account.default_timezone)
+                                    all_day=self.binding.allday,
+                                    user_tz=event.account.default_timezone)
             stop = self.parse_date(self.binding.stop,
-                                   all_day=self.binding.allday, user_tz=event.account.default_timezone)
+                                   all_day=self.binding.allday,
+                                   user_tz=event.account.default_timezone)
         else:
             start = self.parse_date(self.binding.start,
                                     all_day=self.binding.allday)
@@ -275,8 +277,8 @@ class CalendarEventExporter(ExchangeExporter):
                 # yearly
                 # AbsoluteYearlyRecurrence
                 date = (evt.allday and
-                        fields.Date.from_string(evt.start_date) or
-                        fields.Datetime.from_string(evt.start_datetime)
+                        odoo_fields.Date.from_string(evt.start_date) or
+                        odoo_fields.Datetime.from_string(evt.start_datetime)
                         )
 
                 event.abs_year_rec.day_of_month.set(date.day)
@@ -451,6 +453,7 @@ class CalendarEventDisabler(ExchangeDisabler):
         try:
             event.delete(send_meeting_cancellations=SEND_ONLY_TO_ALL)
         except AttributeError as exp:
+            _logger.debug(exp)
             return _(
                 "Seems event with ID %s has already been deleted in Exchange"
             ) % external_id

@@ -57,11 +57,9 @@ class CalendarEvent(models.Model):
                     a['privacy'] != 'private')
                 if not bindings:
                     bindings = self.env['exchange.calendar.event'].sudo(
-                    ).create(
-                       {'backend_id': backend.id,
-                        'user_id': user.id,
-                        'openerp_id': calendar.id}
-                    )
+                    ).create({'backend_id': backend.id,
+                              'user_id': user.id,
+                              'openerp_id': calendar.id})
                 for b in bindings:
                     b.export_record()
         return True
@@ -222,11 +220,11 @@ class ExchangeCalendarEvent(models.Model):
                                  readonly=True)
     updated_at = fields.Datetime(string='Updated At (on Exchange)',
                                  readonly=True)
-    calendar_folder = fields.Char(compute='_get_folder_calendar_id',
+    calendar_folder = fields.Char(compute='_compute_folder_calendar_id',
                                   readonly=True)
 
     @api.depends()
-    def _get_folder_calendar_id(self):
+    def _compute_folder_calendar_id(self):
         for binding in self:
             binding.calendar_folder = self.env.user.find_folder(
                 binding.backend_id.id,

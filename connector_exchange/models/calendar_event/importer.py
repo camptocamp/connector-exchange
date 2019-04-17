@@ -12,11 +12,17 @@ from ...backend import exchange_2010
 from ...unit.importer import (ExchangeImporter,
                               RETRY_ON_ADVISORY_LOCK,
                               )
-from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
-
-from exchangelib import fields as ex_fields
+from odoo.tools import (DEFAULT_SERVER_DATETIME_FORMAT,
+                        DEFAULT_SERVER_DATE_FORMAT,
+                        )
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import fields as ex_fields
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
 
@@ -43,7 +49,6 @@ class CalendarEventImporter(ExchangeImporter):
 
     def fill_start_end(self, event_instance):
         vals = {}
-        user_tz = self.openerp_user.tz
         if event_instance.is_all_day:
             # fill start_date and stop_date
             vals['allday'] = True

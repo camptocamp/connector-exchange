@@ -5,18 +5,19 @@
 
 import logging
 from odoo import _
-from odoo.addons.queue_job.exception import FailedJobError
 from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
 
-
 _logger = logging.getLogger(__name__)
 
-from exchangelib import Contact
-from exchangelib.indexed_properties import (PhysicalAddress,
-                                            EmailAddress,
-                                            PhoneNumber)
+try:
+    from exchangelib import Contact
+    from exchangelib.indexed_properties import (PhysicalAddress,
+                                                EmailAddress,
+                                                PhoneNumber)
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 EXCHANGE_STREET_SEPARATOR = ' // '
 EXCHANGE_NOT_FOUND = 'The specified object was not found in the store.'
@@ -239,7 +240,6 @@ class PartnerExporter(ExchangeExporter):
         assert self.binding
         user = self.binding.user_id
         self.openerp_user = user
-        adapter = self.backend_adapter
         if not self.binding.external_id:
             fields = None
 
@@ -253,7 +253,7 @@ class PartnerExporter(ExchangeExporter):
             # try to find an exchange contact with this binding ID
             exchange_record = self.get_exchange_record()
             # if record not found, create it.
-            if type(exchange_record) == type(Contact()):
+            if isinstance(exchange_record, Contact):
                 exchange_record = exchange_record
                 # Compare change_keys of odoo binding and Exchange record found
                 if self.change_key_equals(exchange_record):

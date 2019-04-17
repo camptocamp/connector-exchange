@@ -12,11 +12,18 @@ from odoo.addons.base.res.res_partner import _tz_get
 from ..res_partner.adapter import PartnerBackendAdapter
 from ..calendar_event.adapter import EventBackendAdapter
 
-from exchangelib import EWSDateTime, EWSTimeZone
-
-from contextlib import contextmanager
-
 _logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import EWSDateTime, EWSTimeZone
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
+
+try:
+    from contextlib import contextmanager
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ExchangeBackend(models.Model):
