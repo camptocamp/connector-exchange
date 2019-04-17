@@ -5,14 +5,16 @@
 
 import logging
 from odoo.addons.connector.unit.backend_adapter import BackendAdapter
-from exchangelib import (IMPERSONATION, Account, Credentials, ServiceAccount,
-                         Configuration, NTLM, EWSTimeZone)
-from exchangelib.protocol import BaseProtocol, NoVerifyHTTPAdapter
-
-
-BaseProtocol.HTTP_ADAPTER_CLS = NoVerifyHTTPAdapter
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import (IMPERSONATION, Account, Credentials,
+                             ServiceAccount, Configuration, NTLM, EWSTimeZone)
+    from exchangelib.protocol import BaseProtocol, NoVerifyHTTPAdapter
+    BaseProtocol.HTTP_ADAPTER_CLS = NoVerifyHTTPAdapter
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 class ExchangeLocation(Credentials):

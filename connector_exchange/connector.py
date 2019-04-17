@@ -28,13 +28,13 @@ class ExchangeBinding(models.AbstractModel):
                               required=True,
                               ondelete='cascade')
     change_key = fields.Char("Change Key")
-    current_folder = fields.Char(compute='_get_folder_create_id',
+    current_folder = fields.Char(compute='_compute_folder_create_id',
                                  readonly=True)
-    delete_folder = fields.Char(compute='_get_folder_delete_id',
+    delete_folder = fields.Char(compute='_compute_folder_delete_id',
                                 readonly=True)
-    contact_folder = fields.Char(compute='_get_folder_contact_id',
+    contact_folder = fields.Char(compute='_compute_folder_contact_id',
                                  readonly=True)
-    calendar_folder = fields.Char(compute='_get_folder_calendar_id',
+    calendar_folder = fields.Char(compute='_compute_folder_calendar_id',
                                   readonly=True)
 
     _sql_constraints = [('exchange_uniq',
@@ -43,7 +43,7 @@ class ExchangeBinding(models.AbstractModel):
                          'Exchange ID for the same record.')]
 
     @api.depends()
-    def _get_folder_create_id(self):
+    def _compute_folder_create_id(self):
         for binding in self:
             binding.current_folder = self.env.user.find_folder(
                 binding.backend_id.id,
@@ -52,7 +52,7 @@ class ExchangeBinding(models.AbstractModel):
             )
 
     @api.depends()
-    def _get_folder_delete_id(self):
+    def _compute_folder_delete_id(self):
         for binding in self:
             binding.delete_folder = self.env.user.find_folder(
                 binding.backend_id.id,
@@ -61,7 +61,7 @@ class ExchangeBinding(models.AbstractModel):
             )
 
     @api.depends()
-    def _get_folder_contact_id(self):
+    def _compute_folder_contact_id(self):
         for binding in self:
             binding.contact_folder = self.env.user.find_folder(
                 binding.backend_id.id,
@@ -70,7 +70,7 @@ class ExchangeBinding(models.AbstractModel):
             )
 
     @api.depends()
-    def _get_folder_calendar_id(self):
+    def _compute_folder_calendar_id(self):
         for binding in self:
             binding.calendar_folder = self.env.user.find_folder(
                 binding.backend_id.id,

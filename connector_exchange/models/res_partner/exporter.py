@@ -9,12 +9,15 @@ from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
 
-from exchangelib import Contact
-from exchangelib.indexed_properties import (PhysicalAddress,
-                                            EmailAddress,
-                                            PhoneNumber)
-
 _logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import Contact
+    from exchangelib.indexed_properties import (PhysicalAddress,
+                                                EmailAddress,
+                                                PhoneNumber)
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 EXCHANGE_STREET_SEPARATOR = ' // '
 EXCHANGE_NOT_FOUND = 'The specified object was not found in the store.'

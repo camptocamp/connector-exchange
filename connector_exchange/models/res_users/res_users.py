@@ -74,13 +74,13 @@ class ResUsers(models.Model):
         comodel_name='res.partner',
         string='Exchange partners',
         groups='connector.group_connector_manager',
-        compute='_get_exchange_contacts'
+        compute='_compute_exchange_contacts'
         )
     exchange_calendar_ids = fields.Many2many(
         comodel_name='calendar.event',
         string='Exchange Events',
         groups='connector.group_connector_manager',
-        compute='_get_exchange_calendar_events'
+        compute='_compute_exchange_calendar_events'
         )
     backend_folder_ids = fields.One2many('res.users.backend.folder', 'user_id',
                                          string="Folders")
@@ -115,12 +115,12 @@ class ResUsers(models.Model):
             return folders[0]
 
     @api.depends()
-    def _get_exchange_contacts(self):
+    def _compute_exchange_contacts(self):
         for user in self:
             user.exchange_contact_ids = user.find_exchange_contacts()
 
     @api.depends()
-    def _get_exchange_calendar_events(self):
+    def _compute_exchange_calendar_events(self):
         for user in self:
             user.exchange_calendar_ids = user.find_exchange_calendar_events()
 

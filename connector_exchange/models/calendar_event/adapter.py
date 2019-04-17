@@ -6,9 +6,13 @@ import logging
 from ...unit.backend_adapter import ExchangeAdapter
 from ...backend import exchange_2010
 
-from exchangelib import FolderCollection
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import FolderCollection
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 @exchange_2010

@@ -220,11 +220,11 @@ class ExchangeCalendarEvent(models.Model):
                                  readonly=True)
     updated_at = fields.Datetime(string='Updated At (on Exchange)',
                                  readonly=True)
-    calendar_folder = fields.Char(compute='_get_folder_calendar_id',
+    calendar_folder = fields.Char(compute='_compute_folder_calendar_id',
                                   readonly=True)
 
     @api.depends()
-    def _get_folder_calendar_id(self):
+    def _compute_folder_calendar_id(self):
         for binding in self:
             binding.calendar_folder = self.env.user.find_folder(
                 binding.backend_id.id,

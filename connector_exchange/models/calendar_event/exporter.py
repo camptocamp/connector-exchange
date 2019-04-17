@@ -13,14 +13,17 @@ from ...unit.exporter import (ExchangeExporter,
                               ExchangeDisabler)
 from ...backend import exchange_2010
 
-from exchangelib import (EWSDateTime, EWSTimeZone, Mailbox, Attendee,
-                         CalendarItem, fields)
-from exchangelib.items import SEND_ONLY_TO_ALL
+_logger = logging.getLogger(__name__)
+
+try:
+    from exchangelib import (EWSDateTime, EWSTimeZone, Mailbox, Attendee,
+                             CalendarItem, fields)
+    from exchangelib.items import SEND_ONLY_TO_ALL
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 EXCHANGE_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EXCHANGE_REC_DATE_FORMAT = '%Y-%m-%d'
-
-_logger = logging.getLogger(__name__)
 
 
 # UTILITY FUNTIONS
